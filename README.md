@@ -1,5 +1,12 @@
 # vinext-starter
 
+## Integração com o Metrics
+
+O backend registra a primeira etapa da candidatura no funil `Formulário EscalaMED` e atualiza o mesmo card nas etapas seguintes.
+
+- `ESCALAMED_FORM_INGEST_KEY` — segredo compartilhado com o Metrics; obrigatório no runtime e somente no servidor.
+- `METRICS_FORM_INGEST_URL` — opcional; por padrão usa `https://metrics.x5med.com.br/api/endomax/integrations/escalamed-application`.
+
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
 
 ## Prerequisites
