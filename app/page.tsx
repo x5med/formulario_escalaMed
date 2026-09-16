@@ -19,7 +19,7 @@ export default function Home() {
                 <span className="h-px w-12 bg-[#C69858]" />
                 Candidatura 2026
               </div>
-              <h1 className="max-w-xl text-balance font-[family-name:var(--font-anton)] text-[clamp(3.6rem,5vw,6rem)] uppercase leading-[0.96] tracking-[0.015em] text-white">
+              <h1 className="max-w-xl text-balance text-[clamp(3.6rem,5vw,6rem)] font-extrabold uppercase leading-[0.96] tracking-[0.015em] text-white">
                 Sua clínica está pronta para o próximo nível?
               </h1>
               <p className="mt-7 max-w-lg text-lg leading-8 text-white/70">
@@ -47,7 +47,7 @@ export default function Home() {
           <div className="mx-auto w-full max-w-[650px]">
             <div className="mb-6 lg:hidden">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#C69858]">Candidatura 2026</p>
-              <h1 className="mt-3 max-w-xl font-[family-name:var(--font-anton)] text-[2.35rem] uppercase leading-[1.02] tracking-[0.01em] text-white sm:text-5xl">
+              <h1 className="mt-3 max-w-xl text-[2.35rem] font-extrabold uppercase leading-[1.02] tracking-[0.01em] text-white sm:text-5xl">
                 Sua clínica está pronta para o próximo nível?
               </h1>
             </div>
