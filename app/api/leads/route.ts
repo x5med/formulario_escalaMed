@@ -1,11 +1,8 @@
-import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
-import { getDb } from "@/db";
-import { leads } from "@/db/schema";
 import { syncLeadToMetrics, type MetricsLeadPayload } from "@/lib/metrics";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 type Payload = Record<string, unknown>;
 
@@ -29,28 +26,28 @@ async function readPayload(request: Request): Promise<Payload | null> {
   }
 }
 
-function metricsPayload(lead: typeof leads.$inferSelect): MetricsLeadPayload {
+function metricsPayload(id: string, payload: Payload, status: "started" | "completed", currentStep: number): MetricsLeadPayload {
   return {
-    sourceLeadId: lead.id,
-    name: lead.name,
-    email: lead.email,
-    phone: lead.phone,
-    crm: lead.crm,
-    specialty: lead.specialty,
-    city: lead.city,
-    clinic: lead.clinic,
-    revenueRange: lead.revenueRange,
-    teamSize: lead.teamSize,
-    mainDifficulty: lead.mainDifficulty,
-    objective: lead.objective,
-    bottleneck: lead.bottleneck,
-    consent: lead.consent,
-    status: lead.status,
-    currentStep: lead.currentStep,
-    utmSource: lead.utmSource,
-    utmMedium: lead.utmMedium,
-    utmCampaign: lead.utmCampaign,
-    referrer: lead.referrer,
+    sourceLeadId: id,
+    name: text(payload.name, 120),
+    email: text(payload.email, 180).toLowerCase(),
+    phone: text(payload.phone, 30),
+    crm: text(payload.crm, 40) || null,
+    specialty: text(payload.specialty, 120) || null,
+    city: text(payload.city, 120) || null,
+    clinic: text(payload.clinic, 160) || null,
+    revenueRange: text(payload.revenueRange, 40) || null,
+    teamSize: text(payload.teamSize, 40) || null,
+    mainDifficulty: text(payload.mainDifficulty, 1200) || null,
+    objective: text(payload.objective, 1200) || null,
+    bottleneck: text(payload.bottleneck, 1200) || null,
+    consent: payload.consent === true,
+    status,
+    currentStep,
+    utmSource: text(payload.utmSource, 120) || null,
+    utmMedium: text(payload.utmMedium, 120) || null,
+    utmCampaign: text(payload.utmCampaign, 180) || null,
+    referrer: text(payload.referrer, 500) || null,
   };
 }
 
@@ -68,41 +65,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Revise nome, e-mail e WhatsApp." }, { status: 400 });
   }
 
-  const now = new Date().toISOString();
-  const db = getDb();
-  const lead = {
-    id,
-    name,
-    email,
-    phone,
-    status: "started",
-    currentStep: 2,
-    utmSource: text(payload.utmSource, 120) || null,
-    utmMedium: text(payload.utmMedium, 120) || null,
-    utmCampaign: text(payload.utmCampaign, 180) || null,
-    referrer: text(payload.referrer, 500) || null,
-    createdAt: now,
-    updatedAt: now,
-  } satisfies typeof leads.$inferInsert;
-
-  await db.insert(leads).values(lead);
   try {
-    await syncLeadToMetrics(metricsPayload({
-      ...lead,
-      crm: null,
-      specialty: null,
-      city: null,
-      clinic: null,
-      revenueRange: null,
-      teamSize: null,
-      mainDifficulty: null,
-      objective: null,
-      bottleneck: null,
-      consent: false,
-      completedAt: null,
-    }));
+    await syncLeadToMetrics(metricsPayload(id, payload, "started", 2));
   } catch (error) {
-    await db.delete(leads).where(eq(leads.id, id));
     console.error("[leads POST] Metrics sync failed", error instanceof Error ? error.message : error);
     return NextResponse.json({ error: "Não foi possível registrar a candidatura no Metrics. Tente novamente." }, { status: 502 });
   }
@@ -120,36 +85,20 @@ export async function PATCH(request: Request) {
 
   const step = Math.min(4, Math.max(1, Number(payload.currentStep) || 1));
   const status = payload.status === "completed" ? "completed" : "started";
-
-  const updates = {
-    crm: text(payload.crm, 40) || null,
-    specialty: text(payload.specialty, 120) || null,
-    city: text(payload.city, 120) || null,
-    clinic: text(payload.clinic, 160) || null,
-    revenueRange: text(payload.revenueRange, 40) || null,
-    teamSize: text(payload.teamSize, 40) || null,
-    mainDifficulty: text(payload.mainDifficulty, 1200) || null,
-    objective: text(payload.objective, 1200) || null,
-    bottleneck: text(payload.bottleneck, 1200) || null,
-    consent: payload.consent === true,
-    status,
-    currentStep: step,
-    updatedAt: new Date().toISOString(),
-    completedAt: status === "completed" ? new Date().toISOString() : null,
-  } as const;
+  const lead = metricsPayload(id, payload, status, step);
+  if (lead.name.length < 3 || !isEmail(lead.email) || !validPhone(lead.phone)) {
+    return NextResponse.json({ error: "Revise nome, e-mail e WhatsApp." }, { status: 400 });
+  }
 
   if (status === "completed") {
-    const required = [updates.crm, updates.specialty, updates.city, updates.clinic, updates.revenueRange, updates.teamSize, updates.mainDifficulty, updates.objective, updates.bottleneck];
-    if (required.some((value) => !value) || !updates.consent) {
+    const required = [lead.crm, lead.specialty, lead.city, lead.clinic, lead.revenueRange, lead.teamSize, lead.mainDifficulty, lead.objective, lead.bottleneck];
+    if (required.some((value) => !value) || !lead.consent) {
       return NextResponse.json({ error: "Preencha todas as etapas antes de concluir." }, { status: 400 });
     }
   }
 
-  const [lead] = await getDb().update(leads).set(updates).where(eq(leads.id, id)).returning();
-  if (!lead) return NextResponse.json({ error: "Candidatura não encontrada." }, { status: 404 });
-
   try {
-    await syncLeadToMetrics(metricsPayload(lead));
+    await syncLeadToMetrics(lead);
   } catch (error) {
     console.error("[leads PATCH] Metrics sync failed", error instanceof Error ? error.message : error);
     return NextResponse.json({ error: "Não foi possível atualizar a candidatura no Metrics. Tente novamente." }, { status: 502 });
