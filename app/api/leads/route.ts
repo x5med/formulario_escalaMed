@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { leads } from "@/db/schema";
+import { syncLeadToMetrics, type MetricsLeadPayload } from "@/lib/metrics";
 
 export const runtime = "edge";
 
@@ -28,6 +29,31 @@ async function readPayload(request: Request): Promise<Payload | null> {
   }
 }
 
+function metricsPayload(lead: typeof leads.$inferSelect): MetricsLeadPayload {
+  return {
+    sourceLeadId: lead.id,
+    name: lead.name,
+    email: lead.email,
+    phone: lead.phone,
+    crm: lead.crm,
+    specialty: lead.specialty,
+    city: lead.city,
+    clinic: lead.clinic,
+    revenueRange: lead.revenueRange,
+    teamSize: lead.teamSize,
+    mainDifficulty: lead.mainDifficulty,
+    objective: lead.objective,
+    bottleneck: lead.bottleneck,
+    consent: lead.consent,
+    status: lead.status,
+    currentStep: lead.currentStep,
+    utmSource: lead.utmSource,
+    utmMedium: lead.utmMedium,
+    utmCampaign: lead.utmCampaign,
+    referrer: lead.referrer,
+  };
+}
+
 export async function POST(request: Request) {
   const payload = await readPayload(request);
   if (!payload) return NextResponse.json({ error: "Dados inválidos." }, { status: 400 });
@@ -43,7 +69,8 @@ export async function POST(request: Request) {
   }
 
   const now = new Date().toISOString();
-  await getDb().insert(leads).values({
+  const db = getDb();
+  const lead = {
     id,
     name,
     email,
@@ -56,7 +83,29 @@ export async function POST(request: Request) {
     referrer: text(payload.referrer, 500) || null,
     createdAt: now,
     updatedAt: now,
-  });
+  } satisfies typeof leads.$inferInsert;
+
+  await db.insert(leads).values(lead);
+  try {
+    await syncLeadToMetrics(metricsPayload({
+      ...lead,
+      crm: null,
+      specialty: null,
+      city: null,
+      clinic: null,
+      revenueRange: null,
+      teamSize: null,
+      mainDifficulty: null,
+      objective: null,
+      bottleneck: null,
+      consent: false,
+      completedAt: null,
+    }));
+  } catch (error) {
+    await db.delete(leads).where(eq(leads.id, id));
+    console.error("[leads POST] Metrics sync failed", error instanceof Error ? error.message : error);
+    return NextResponse.json({ error: "Não foi possível registrar a candidatura no Metrics. Tente novamente." }, { status: 502 });
+  }
 
   return NextResponse.json({ id }, { status: 201 });
 }
@@ -96,6 +145,14 @@ export async function PATCH(request: Request) {
     }
   }
 
-  await getDb().update(leads).set(updates).where(eq(leads.id, id));
+  const [lead] = await getDb().update(leads).set(updates).where(eq(leads.id, id)).returning();
+  if (!lead) return NextResponse.json({ error: "Candidatura não encontrada." }, { status: 404 });
+
+  try {
+    await syncLeadToMetrics(metricsPayload(lead));
+  } catch (error) {
+    console.error("[leads PATCH] Metrics sync failed", error instanceof Error ? error.message : error);
+    return NextResponse.json({ error: "Não foi possível atualizar a candidatura no Metrics. Tente novamente." }, { status: 502 });
+  }
   return NextResponse.json({ id });
 }
