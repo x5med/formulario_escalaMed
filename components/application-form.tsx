@@ -259,8 +259,8 @@ export function ApplicationForm() {
   }
 
   return (
-    <div className="rounded-[1.6rem] border border-white/60 bg-white p-5 shadow-[0_30px_80px_rgb(0_24_44/18%)] sm:p-8 lg:p-9">
-      <div className="mb-7">
+    <div className="rounded-[1.6rem] border border-white/60 bg-white p-5 shadow-[0_30px_80px_rgb(0_24_44/18%)] sm:p-8 lg:p-7">
+      <div className="mb-5">
         <div className="flex items-center justify-between gap-4">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#C69858]">Etapa {step} de 2</p>
           <p className="text-xs font-medium text-[#6F8292]">{stepMeta[step - 1].label}</p>
@@ -270,7 +270,7 @@ export function ApplicationForm() {
         </div>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-5">
         <h2 className="text-[1.65rem] font-semibold leading-tight tracking-[-0.035em] text-[#002647] sm:text-3xl">{stepMeta[step - 1].title}</h2>
         <p className="mt-2 text-sm leading-6 text-[#60778A]">{stepMeta[step - 1].description}</p>
       </div>
@@ -278,14 +278,14 @@ export function ApplicationForm() {
       <form onSubmit={handleSubmit} noValidate>
         <input tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px]" value={data.companyWebsite} onChange={(event) => update("companyWebsite", event.target.value)} />
 
-        {step === 1 && <div className="grid gap-5">
+        {step === 1 && <div className="grid gap-4">
           <div><Label htmlFor="name" className="mb-2 text-[#173D5D]">Nome completo</Label><Input id="name" autoComplete="name" autoFocus className="form-field" placeholder="Como podemos chamar você?" value={data.name} onChange={(event) => update("name", event.target.value)} aria-invalid={!!errors.name} /><FieldError>{errors.name}</FieldError></div>
           <div><Label htmlFor="email" className="mb-2 text-[#173D5D]">E-mail</Label><Input id="email" type="email" autoComplete="email" className="form-field" placeholder="voce@exemplo.com" value={data.email} onChange={(event) => update("email", event.target.value)} aria-invalid={!!errors.email} /><FieldError>{errors.email}</FieldError></div>
           <div><Label htmlFor="phone" className="mb-2 text-[#173D5D]">WhatsApp</Label><Input id="phone" type="tel" inputMode="tel" autoComplete="tel" className="form-field" placeholder="(11) 99999-9999" value={data.phone} onChange={(event) => update("phone", formatPhone(event.target.value))} aria-invalid={!!errors.phone} /><FieldError>{errors.phone}</FieldError></div>
           <div><Label htmlFor="instagram" className="mb-2 text-[#173D5D]">Qual o @ do Instagram?</Label><Input id="instagram" autoCapitalize="none" autoComplete="off" spellCheck={false} required className="form-field" placeholder="@seuperfil" value={data.instagram} onChange={(event) => update("instagram", event.target.value)} aria-invalid={!!errors.instagram} /><FieldError>{errors.instagram}</FieldError></div>
         </div>}
 
-        {step === 2 && <div className="grid gap-5">
+        {step === 2 && <div className="grid gap-4">
           <div className="[&_[data-slot=native-select-wrapper]]:w-full"><Label htmlFor="role" className="mb-2 text-[#173D5D]">Qual seu cargo na clínica? <span aria-hidden="true" className="text-[#B33D3D]">*</span></Label><NativeSelect id="role" autoFocus required className="form-field w-full" value={data.role} onChange={(event) => update("role", event.target.value)} aria-invalid={!!errors.role}><NativeSelectOption value="">Selecione seu cargo</NativeSelectOption><NativeSelectOption value="doctor">Médico</NativeSelectOption><NativeSelectOption value="owner-manager">Dono ou Gestor de clínica</NativeSelectOption><NativeSelectOption value="other">Outros</NativeSelectOption></NativeSelect><FieldError>{errors.role}</FieldError></div>
           {data.role === "other" && <div><Label htmlFor="otherRole" className="mb-2 text-[#173D5D]">Caso tenha selecionado Outro, especifique qual é o seu cargo: <span aria-hidden="true" className="text-[#B33D3D]">*</span></Label><Input id="otherRole" autoFocus required className="form-field" placeholder="Seu cargo na clínica" value={data.otherRole} onChange={(event) => update("otherRole", event.target.value)} aria-invalid={!!errors.otherRole} /><FieldError>{errors.otherRole}</FieldError></div>}
           <div className="[&_[data-slot=native-select-wrapper]]:w-full"><Label htmlFor="revenue" className="mb-2 text-[#173D5D]">Faixa de faturamento por mês <span aria-hidden="true" className="text-[#B33D3D]">*</span></Label><NativeSelect id="revenue" required className="form-field w-full" value={data.revenueRange} onChange={(event) => update("revenueRange", event.target.value)} aria-invalid={!!errors.revenueRange}><NativeSelectOption value="">Selecione uma faixa</NativeSelectOption><NativeSelectOption value="under-40k">&lt; 40 mil</NativeSelectOption><NativeSelectOption value="40k-70k">40 a 70 mil</NativeSelectOption><NativeSelectOption value="70k-100k">70 a 100 mil</NativeSelectOption><NativeSelectOption value="over-100k">&gt; 100 mil</NativeSelectOption></NativeSelect><FieldError>{errors.revenueRange}</FieldError></div>
@@ -294,7 +294,7 @@ export function ApplicationForm() {
 
         {requestError && <p role="alert" className="mt-5 rounded-xl bg-[#FFF1F1] px-4 py-3 text-sm text-[#A63838]">{requestError}</p>}
 
-        <div className={`mt-7 flex items-center gap-3 ${step > 1 ? "justify-between" : "justify-end"}`}>
+        <div className={`mt-6 flex items-center gap-3 ${step > 1 ? "justify-between" : "justify-end"}`}>
           {step > 1 && <Button type="button" variant="ghost" className="h-12 rounded-xl px-3 text-[#526C80] hover:bg-[#EDF3F7] hover:text-[#002647]" onClick={() => setStep((current) => current - 1)} disabled={loading}><ArrowLeft /> Voltar</Button>}
           <Button type="submit" className="h-12 min-w-[170px] rounded-xl bg-[#002647] px-6 text-white shadow-[0_10px_24px_rgb(0_38_71/18%)] hover:bg-[#06395F]" disabled={loading}>{loading ? <><Loader2 className="animate-spin" /> Salvando...</> : step === 2 ? <>Enviar candidatura <Check /></> : <>Continuar <ArrowRight /></>}</Button>
         </div>

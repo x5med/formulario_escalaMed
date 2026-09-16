@@ -10,25 +10,25 @@ export default function Home() {
       <div aria-hidden="true" className="gold-glow absolute -right-32 top-0 h-96 w-96 rounded-full" />
 
       <div className="relative mx-auto grid min-h-screen w-full max-w-[1440px] lg:grid-cols-[minmax(0,0.9fr)_minmax(540px,0.95fr)]">
-        <section className="flex flex-col px-5 pb-8 pt-6 sm:px-9 sm:pt-8 lg:min-h-screen lg:justify-between lg:px-14 lg:py-12 xl:px-20">
+        <section className="flex flex-col px-5 pb-8 pt-6 sm:px-9 sm:pt-8 lg:min-h-screen lg:justify-between lg:px-10 lg:py-8 xl:px-16">
           <div>
             <Image src="/escalamed-logo-dark.png" alt="EscalaMed" width={675} height={120} priority className="h-auto w-[190px] sm:w-[225px]" />
 
-            <div className="mt-12 hidden lg:block">
-              <div className="mb-7 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.22em] text-[#C69858]">
+            <div className="mt-8 hidden lg:block">
+              <div className="mb-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.22em] text-[#C69858]">
                 <span className="h-px w-12 bg-[#C69858]" />
                 Candidatura 2026
               </div>
-              <h1 className="max-w-xl text-balance text-[clamp(3.25rem,4.5vw,5.25rem)] font-extrabold uppercase leading-[0.96] tracking-[0.015em] text-white">
+              <h1 className="max-w-xl text-balance text-[clamp(2.8rem,4.3vw,4.75rem)] font-extrabold uppercase leading-[0.96] tracking-[0.015em] text-white">
                 Sua clínica está pronta para o próximo nível?
               </h1>
-              <p className="mt-7 max-w-lg text-lg leading-8 text-white/70">
+              <p className="mt-5 max-w-lg text-base leading-7 text-white/70">
                 Conte sobre o seu momento atual. A equipe X5Med vai analisar o seu perfil e entrar em contato com os próximos passos.
               </p>
             </div>
           </div>
 
-          <div className="mt-8 hidden border-t border-white/15 pt-7 lg:block">
+          <div className="mt-6 hidden border-t border-white/15 pt-5 lg:block">
             <div className="grid max-w-lg grid-cols-2 gap-5 text-sm">
               <div className="flex items-start gap-3">
                 <CalendarDays className="mt-0.5 size-5 text-[#C69858]" />
@@ -42,7 +42,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative flex items-center px-4 pb-5 sm:px-8 sm:pb-8 lg:bg-[#F7FAFD] lg:px-12 lg:py-10 xl:px-16">
+        <section className="relative flex items-center px-4 pb-5 sm:px-8 sm:pb-8 lg:bg-[#F7FAFD] lg:px-12 lg:py-6 xl:px-16">
           <div aria-hidden="true" className="edge-mark absolute left-0 top-0 hidden h-full w-4 lg:block" />
           <div className="mx-auto w-full max-w-[650px]">
             <div className="mb-6 lg:hidden">
