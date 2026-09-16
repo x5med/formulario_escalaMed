@@ -23,7 +23,7 @@ export default function Home() {
                 Sua clínica está pronta para o próximo nível?
               </h1>
               <p className="mt-7 max-w-lg text-lg leading-8 text-white/70">
-                Conte sobre o seu momento atual. A equipe EscalaMED vai analisar o seu perfil e entrar em contato com os próximos passos.
+                Conte sobre o seu momento atual. A equipe X5Med vai analisar o seu perfil e entrar em contato com os próximos passos.
               </p>
             </div>
           </div>
