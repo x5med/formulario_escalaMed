@@ -18,6 +18,10 @@ function validPhone(value: string) {
   return value.replace(/\D/g, "").length >= 10;
 }
 
+function validInstagram(value: string) {
+  return /^[A-Za-z0-9._]{1,30}$/.test(value);
+}
+
 async function readPayload(request: Request): Promise<Payload | null> {
   try {
     return (await request.json()) as Payload;
@@ -32,7 +36,7 @@ function metricsPayload(id: string, payload: Payload, status: "started" | "compl
     name: text(payload.name, 120),
     email: text(payload.email, 180).toLowerCase(),
     phone: text(payload.phone, 30),
-    instagram: text(payload.instagram, 120).replace(/^@/, "") || null,
+    instagram: text(payload.instagram, 120).replace(/^@/, ""),
     crm: text(payload.crm, 40) || null,
     specialty: text(payload.specialty, 120) || null,
     city: text(payload.city, 120) || null,
@@ -59,15 +63,13 @@ export async function POST(request: Request) {
   const id = crypto.randomUUID();
   if (text(payload.companyWebsite, 100)) return NextResponse.json({ id });
 
-  const name = text(payload.name, 120);
-  const email = text(payload.email, 180).toLowerCase();
-  const phone = text(payload.phone, 30);
-  if (name.length < 3 || !isEmail(email) || !validPhone(phone)) {
-    return NextResponse.json({ error: "Revise nome, e-mail e WhatsApp." }, { status: 400 });
+  const lead = metricsPayload(id, payload, "started", 2);
+  if (lead.name.length < 3 || !isEmail(lead.email) || !validPhone(lead.phone) || !validInstagram(lead.instagram)) {
+    return NextResponse.json({ error: "Revise nome, e-mail, WhatsApp e Instagram." }, { status: 400 });
   }
 
   try {
-    await syncLeadToMetrics(metricsPayload(id, payload, "started", 2));
+    await syncLeadToMetrics(lead);
   } catch (error) {
     console.error("[leads POST] Metrics sync failed", error instanceof Error ? error.message : error);
     return NextResponse.json({ error: "Não foi possível registrar a candidatura no Metrics. Tente novamente." }, { status: 502 });
@@ -87,8 +89,8 @@ export async function PATCH(request: Request) {
   const step = Math.min(4, Math.max(1, Number(payload.currentStep) || 1));
   const status = payload.status === "completed" ? "completed" : "started";
   const lead = metricsPayload(id, payload, status, step);
-  if (lead.name.length < 3 || !isEmail(lead.email) || !validPhone(lead.phone)) {
-    return NextResponse.json({ error: "Revise nome, e-mail e WhatsApp." }, { status: 400 });
+  if (lead.name.length < 3 || !isEmail(lead.email) || !validPhone(lead.phone) || !validInstagram(lead.instagram)) {
+    return NextResponse.json({ error: "Revise nome, e-mail, WhatsApp e Instagram." }, { status: 400 });
   }
 
   if (status === "completed") {

@@ -105,7 +105,7 @@ export function ApplicationForm() {
           name: { type: "string", minLength: 3, description: "Nome completo" },
           email: { type: "string", format: "email" },
           phone: { type: "string", minLength: 10, description: "WhatsApp com DDD" },
-          instagram: { type: "string", description: "@ do Instagram, se tiver" },
+          instagram: { type: "string", minLength: 1, description: "@ do Instagram" },
           crm: { type: "string", minLength: 3, description: "CRM e estado" },
           specialty: { type: "string", minLength: 2 },
           city: { type: "string", minLength: 2, description: "Cidade e estado" },
@@ -117,7 +117,7 @@ export function ApplicationForm() {
           bottleneck: { type: "string", minLength: 10 },
           consent: { type: "boolean", const: true, description: "Autorização para contato sobre a candidatura" },
         },
-        required: [...stringFields, "consent"],
+        required: [...stringFields, "instagram", "consent"],
         additionalProperties: false,
       },
       annotations: { readOnlyHint: false, untrustedContentHint: false },
@@ -130,6 +130,7 @@ export function ApplicationForm() {
           candidate[field] = raw[field].trim();
         }
         candidate.instagram = typeof raw.instagram === "string" ? raw.instagram.trim() : "";
+        if (!/^@?[A-Za-z0-9._]{1,30}$/.test(candidate.instagram)) throw new Error("Instagram inválido.");
         if (!/^\S+@\S+\.\S+$/.test(candidate.email) || candidate.phone.replace(/\D/g, "").length < 10 || raw.consent !== true) {
           throw new Error("E-mail, WhatsApp ou consentimento inválido.");
         }
@@ -172,6 +173,7 @@ export function ApplicationForm() {
       if (data.name.trim().length < 3) next.name = "Digite seu nome completo.";
       if (!/^\S+@\S+\.\S+$/.test(data.email)) next.email = "Digite um e-mail válido.";
       if (data.phone.replace(/\D/g, "").length < 10) next.phone = "Digite um WhatsApp com DDD.";
+      if (!/^@?[A-Za-z0-9._]{1,30}$/.test(data.instagram.trim())) next.instagram = "Informe um @ de Instagram válido.";
     }
     if (step === 2) {
       if (data.crm.trim().length < 3) next.crm = "Informe seu CRM e estado.";
@@ -311,7 +313,7 @@ export function ApplicationForm() {
           <div><Label htmlFor="name" className="mb-2 text-[#173D5D]">Nome completo</Label><Input id="name" autoComplete="name" autoFocus className="form-field" placeholder="Como podemos chamar você?" value={data.name} onChange={(event) => update("name", event.target.value)} aria-invalid={!!errors.name} /><FieldError>{errors.name}</FieldError></div>
           <div><Label htmlFor="email" className="mb-2 text-[#173D5D]">E-mail</Label><Input id="email" type="email" autoComplete="email" className="form-field" placeholder="voce@exemplo.com" value={data.email} onChange={(event) => update("email", event.target.value)} aria-invalid={!!errors.email} /><FieldError>{errors.email}</FieldError></div>
           <div><Label htmlFor="phone" className="mb-2 text-[#173D5D]">WhatsApp</Label><Input id="phone" type="tel" inputMode="tel" autoComplete="tel" className="form-field" placeholder="(11) 99999-9999" value={data.phone} onChange={(event) => update("phone", formatPhone(event.target.value))} aria-invalid={!!errors.phone} /><FieldError>{errors.phone}</FieldError></div>
-          <div><Label htmlFor="instagram" className="mb-2 text-[#173D5D]">Qual o @ do Instagram? <span className="font-normal text-[#60778A]">(opcional)</span></Label><Input id="instagram" autoCapitalize="none" autoComplete="off" spellCheck={false} className="form-field" placeholder="@seuperfil" value={data.instagram} onChange={(event) => update("instagram", event.target.value)} /></div>
+          <div><Label htmlFor="instagram" className="mb-2 text-[#173D5D]">Qual o @ do Instagram?</Label><Input id="instagram" autoCapitalize="none" autoComplete="off" spellCheck={false} required className="form-field" placeholder="@seuperfil" value={data.instagram} onChange={(event) => update("instagram", event.target.value)} aria-invalid={!!errors.instagram} /><FieldError>{errors.instagram}</FieldError></div>
         </div>}
 
         {step === 2 && <div className="grid gap-5 sm:grid-cols-2">

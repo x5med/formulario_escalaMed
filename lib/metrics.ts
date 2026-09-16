@@ -5,7 +5,7 @@ export type MetricsLeadPayload = {
   name: string;
   email: string;
   phone: string;
-  instagram?: string | null;
+  instagram: string;
   crm?: string | null;
   specialty?: string | null;
   city?: string | null;
