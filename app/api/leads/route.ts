@@ -32,6 +32,7 @@ function metricsPayload(id: string, payload: Payload, status: "started" | "compl
     name: text(payload.name, 120),
     email: text(payload.email, 180).toLowerCase(),
     phone: text(payload.phone, 30),
+    instagram: text(payload.instagram, 120).replace(/^@/, "") || null,
     crm: text(payload.crm, 40) || null,
     specialty: text(payload.specialty, 120) || null,
     city: text(payload.city, 120) || null,

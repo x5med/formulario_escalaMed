@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ type FormData = {
   name: string;
   email: string;
   phone: string;
+  instagram: string;
   crm: string;
   specialty: string;
   city: string;
@@ -44,6 +45,7 @@ const initialData: FormData = {
   name: "",
   email: "",
   phone: "",
+  instagram: "",
   crm: "",
   specialty: "",
   city: "",
@@ -58,7 +60,7 @@ const initialData: FormData = {
 };
 
 const stepMeta = [
-  { label: "Seus dados", title: "Vamos começar por você", description: "Leva menos de um minuto. Ao avançar, sua candidatura já fica registrada." },
+  { label: "Seus dados", title: "Vamos começar por você", description: "Leva menos de um minuto. Ao avançar, começamos a registrar sua candidatura." },
   { label: "Perfil", title: "Seu perfil profissional", description: "Essas informações ajudam a equipe a entender a sua atuação." },
   { label: "Clínica", title: "O momento da sua clínica", description: "Compartilhe uma visão geral da operação atual." },
   { label: "Objetivos", title: "Onde você quer chegar?", description: "Última etapa: conte o que precisa mudar no seu negócio." },
@@ -79,7 +81,8 @@ function FieldError({ children }: { children?: string }) {
 
 export function ApplicationForm() {
   const [step, setStep] = useState(1);
-  const [leadId, setLeadId] = useState<string | null>(null);
+  const leadIdRef = useRef<string | null>(null);
+  const pendingSaveRef = useRef<Promise<void> | null>(null);
   const [data, setData] = useState<FormData>(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [requestError, setRequestError] = useState("");
@@ -102,6 +105,7 @@ export function ApplicationForm() {
           name: { type: "string", minLength: 3, description: "Nome completo" },
           email: { type: "string", format: "email" },
           phone: { type: "string", minLength: 10, description: "WhatsApp com DDD" },
+          instagram: { type: "string", description: "@ do Instagram, se tiver" },
           crm: { type: "string", minLength: 3, description: "CRM e estado" },
           specialty: { type: "string", minLength: 2 },
           city: { type: "string", minLength: 2, description: "Cidade e estado" },
@@ -125,6 +129,7 @@ export function ApplicationForm() {
           if (typeof raw[field] !== "string" || raw[field].trim().length < 2) throw new Error(`Campo obrigatório inválido: ${field}.`);
           candidate[field] = raw[field].trim();
         }
+        candidate.instagram = typeof raw.instagram === "string" ? raw.instagram.trim() : "";
         if (!/^\S+@\S+\.\S+$/.test(candidate.email) || candidate.phone.replace(/\D/g, "").length < 10 || raw.consent !== true) {
           throw new Error("E-mail, WhatsApp ou consentimento inválido.");
         }
@@ -141,7 +146,7 @@ export function ApplicationForm() {
         const finished = await fetch("/api/leads", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...candidate, id, currentStep: 4, status: "completed" }) });
         if (!finished.ok) throw new Error("Não foi possível concluir a candidatura.");
         setData(candidate);
-        setLeadId(id);
+        leadIdRef.current = id;
         setStep(4);
         setCompleted(true);
         return { id, status: "completed" };
@@ -188,27 +193,50 @@ export function ApplicationForm() {
     return Object.keys(next).length === 0;
   };
 
-  const persist = async (nextStep: number, final = false) => {
+  const persist = (nextStep: number, final = false) => {
     const tracking = typeof window === "undefined" ? {} : {
       utmSource: new URLSearchParams(window.location.search).get("utm_source") || "",
       utmMedium: new URLSearchParams(window.location.search).get("utm_medium") || "",
       utmCampaign: new URLSearchParams(window.location.search).get("utm_campaign") || "",
       referrer: document.referrer,
     };
-    const response = await fetch("/api/leads", {
-      method: leadId ? "PATCH" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...data,
-        ...tracking,
-        id: leadId,
-        currentStep: nextStep,
-        status: final ? "completed" : "started",
-      }),
-    });
-    if (!response.ok) throw new Error("Não foi possível salvar agora.");
-    const result = (await response.json()) as { id: string };
-    if (!leadId) setLeadId(result.id);
+    const payload = { ...data, ...tracking, currentStep: nextStep, status: final ? "completed" : "started" };
+    const previousSave = pendingSaveRef.current;
+    const save = (async () => {
+      // A etapa seguinte aguarda a anterior para não chegar ao Metrics antes do lead inicial.
+      if (previousSave) await previousSave.catch(() => undefined);
+
+      let id = leadIdRef.current;
+      const alreadyCreated = Boolean(id);
+      if (!id) {
+        const response = await fetch("/api/leads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...payload, currentStep: 2, status: "started" }),
+          keepalive: true,
+        });
+        if (!response.ok) throw new Error("Não foi possível salvar agora.");
+        const result = (await response.json()) as { id: string };
+        id = result.id;
+        leadIdRef.current = id;
+      }
+
+      if (nextStep === 2 && !final && !alreadyCreated) return;
+
+      const response = await fetch("/api/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, id }),
+      });
+      if (!response.ok) throw new Error("Não foi possível salvar agora.");
+    })();
+
+    pendingSaveRef.current = save;
+    void save.then(
+      () => { if (pendingSaveRef.current === save) pendingSaveRef.current = null; },
+      () => { if (pendingSaveRef.current === save) pendingSaveRef.current = null; },
+    );
+    return save;
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -216,14 +244,25 @@ export function ApplicationForm() {
     setRequestError("");
     if (!validate()) return;
 
+    if (step === 1) {
+      setStep(2);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      void persist(2).catch(() => {
+        setRequestError("Não conseguimos salvar seus dados. Continue preenchendo e tente novamente na próxima etapa.");
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       if (step < 4) {
         await persist(step + 1);
+        setRequestError("");
         setStep((current) => current + 1);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         await persist(4, true);
+        setRequestError("");
         setCompleted(true);
       }
     } catch {
@@ -272,6 +311,7 @@ export function ApplicationForm() {
           <div><Label htmlFor="name" className="mb-2 text-[#173D5D]">Nome completo</Label><Input id="name" autoComplete="name" autoFocus className="form-field" placeholder="Como podemos chamar você?" value={data.name} onChange={(event) => update("name", event.target.value)} aria-invalid={!!errors.name} /><FieldError>{errors.name}</FieldError></div>
           <div><Label htmlFor="email" className="mb-2 text-[#173D5D]">E-mail</Label><Input id="email" type="email" autoComplete="email" className="form-field" placeholder="voce@exemplo.com" value={data.email} onChange={(event) => update("email", event.target.value)} aria-invalid={!!errors.email} /><FieldError>{errors.email}</FieldError></div>
           <div><Label htmlFor="phone" className="mb-2 text-[#173D5D]">WhatsApp</Label><Input id="phone" type="tel" inputMode="tel" autoComplete="tel" className="form-field" placeholder="(11) 99999-9999" value={data.phone} onChange={(event) => update("phone", formatPhone(event.target.value))} aria-invalid={!!errors.phone} /><FieldError>{errors.phone}</FieldError></div>
+          <div><Label htmlFor="instagram" className="mb-2 text-[#173D5D]">Qual o @ do Instagram? <span className="font-normal text-[#60778A]">(opcional)</span></Label><Input id="instagram" autoCapitalize="none" autoComplete="off" spellCheck={false} className="form-field" placeholder="@seuperfil" value={data.instagram} onChange={(event) => update("instagram", event.target.value)} /></div>
         </div>}
 
         {step === 2 && <div className="grid gap-5 sm:grid-cols-2">
