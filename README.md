@@ -7,6 +7,10 @@ O backend registra a primeira etapa da candidatura no funil `Formulário EscalaM
 - `ESCALAMED_FORM_INGEST_KEY` — segredo compartilhado com o Metrics; obrigatório no runtime e somente no servidor.
 - `METRICS_FORM_INGEST_URL` — opcional; por padrão usa `https://metrics.x5med.com.br/api/endomax/integrations/escalamed-application`.
 
+## Hospedagem na Vercel
+
+O projeto usa o runtime padrão do Next.js na Vercel. O Metrics é a fonte persistente das candidaturas, portanto a API não depende de Cloudflare D1 em produção.
+
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
 
 ## Prerequisites
