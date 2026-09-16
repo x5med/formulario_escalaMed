@@ -22,6 +22,9 @@ function validInstagram(value: string) {
   return /^[A-Za-z0-9._]{1,30}$/.test(value);
 }
 
+const roles = new Set(["doctor", "owner-manager", "other"]);
+const revenueRanges = new Set(["under-40k", "40k-70k", "70k-100k", "over-100k"]);
+
 async function readPayload(request: Request): Promise<Payload | null> {
   try {
     return (await request.json()) as Payload;
@@ -37,6 +40,8 @@ function metricsPayload(id: string, payload: Payload, status: "started" | "compl
     email: text(payload.email, 180).toLowerCase(),
     phone: text(payload.phone, 30),
     instagram: text(payload.instagram, 120).replace(/^@/, ""),
+    role: text(payload.role, 40) || null,
+    otherRole: text(payload.otherRole, 160) || null,
     crm: text(payload.crm, 40) || null,
     specialty: text(payload.specialty, 120) || null,
     city: text(payload.city, 120) || null,
@@ -46,7 +51,7 @@ function metricsPayload(id: string, payload: Payload, status: "started" | "compl
     mainDifficulty: text(payload.mainDifficulty, 1200) || null,
     objective: text(payload.objective, 1200) || null,
     bottleneck: text(payload.bottleneck, 1200) || null,
-    consent: payload.consent === true,
+    consent: typeof payload.consent === "boolean" ? payload.consent : undefined,
     status,
     currentStep,
     utmSource: text(payload.utmSource, 120) || null,
@@ -94,8 +99,10 @@ export async function PATCH(request: Request) {
   }
 
   if (status === "completed") {
-    const required = [lead.crm, lead.specialty, lead.city, lead.clinic, lead.revenueRange, lead.teamSize, lead.mainDifficulty, lead.objective, lead.bottleneck];
-    if (required.some((value) => !value) || !lead.consent) {
+    const legacyRequired = [lead.crm, lead.specialty, lead.city, lead.clinic, lead.revenueRange, lead.teamSize, lead.mainDifficulty, lead.objective, lead.bottleneck];
+    const validNewAnswers = roles.has(lead.role || "") && revenueRanges.has(lead.revenueRange || "") && (lead.role !== "other" || (lead.otherRole?.length || 0) >= 2);
+    const validLegacyAnswers = !lead.role && legacyRequired.every(Boolean);
+    if ((!validNewAnswers && !validLegacyAnswers) || !lead.consent) {
       return NextResponse.json({ error: "Preencha todas as etapas antes de concluir." }, { status: 400 });
     }
   }

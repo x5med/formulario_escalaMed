@@ -6,6 +6,8 @@ export type MetricsLeadPayload = {
   email: string;
   phone: string;
   instagram: string;
+  role?: string | null;
+  otherRole?: string | null;
   crm?: string | null;
   specialty?: string | null;
   city?: string | null;
