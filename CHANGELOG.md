@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-18 — Inscrição em página única
+
+- Todas as perguntas aparecem no formulário principal. O investimento de R$ 2.497,00 (10x de R$ 249,70) fica em destaque.
+- Cupons de convite válidos concluem a inscrição gratuitamente; sem cupom, o participante segue para o checkout da Eduzz após o registro no Metrics.
+- A opção de receber marketing por WhatsApp continua desmarcada e não é obrigatória.
+
 ## 2026-09-18 — Consentimento opcional de WhatsApp
 
 - A segunda etapa da candidatura exibe o opt-in de marketing desmarcado e um link para a Política de Privacidade. A escolha não bloqueia a candidatura.

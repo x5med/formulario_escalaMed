@@ -2,10 +2,11 @@
 
 ## Integração com o Metrics
 
-O backend registra a primeira etapa da candidatura no funil `Formulário EscalaMED` e conclui o mesmo card na segunda etapa, com cargo e faixa de faturamento mensal.
+O formulário envia todas as respostas em uma única submissão ao funil de imersão EscalaMED, incluindo a condição da inscrição, o cupom validado e o preço de R$ 2.497,00. Os cupons aceitos são Fabio, Patricio, Patricia, Vital, Tainara e Convite, sem diferenciar maiúsculas/minúsculas ou acentos.
 
 - `ESCALAMED_FORM_INGEST_KEY` — segredo compartilhado com o Metrics; obrigatório no runtime e somente no servidor.
 - `METRICS_FORM_INGEST_URL` — opcional; por padrão usa `https://metrics.x5med.com.br/api/endomax/integrations/escalamed-application`.
+- Inscrições sem cupom seguem para o checkout Eduzz: `https://chk.eduzz.com/1W3223YQ92`.
 
 ## Hospedagem na Vercel
 

@@ -5,8 +5,8 @@ import "./globals.css";
 const sora = Sora({ subsets: ["latin"], variable: "--font-sora", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Candidatura EscalaMED 2026",
-  description: "Conte um pouco sobre você e sua clínica para iniciar sua candidatura ao EscalaMED 2026.",
+  title: "Inscrição EscalaMED 2026",
+  description: "Garanta sua inscrição na Imersão EscalaMED 2026. Use um cupom de convite para participar gratuitamente.",
   other: {
     "codex-preview": "development",
   },

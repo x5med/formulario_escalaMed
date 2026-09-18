@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { syncLeadToMetrics, type MetricsLeadPayload } from "@/lib/metrics";
 import { WHATSAPP_MARKETING_CONSENT_TEXT } from "@/lib/consent";
+import { normalizeCoupon } from "@/lib/coupons";
+import { syncLeadToMetrics, type MetricsLeadPayload } from "@/lib/metrics";
 
 export const runtime = "nodejs";
 
@@ -11,30 +12,10 @@ function text(value: unknown, max = 500) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
-function isEmail(value: string) {
-  return /^\S+@\S+\.\S+$/.test(value);
-}
-
-function validPhone(value: string) {
-  return value.replace(/\D/g, "").length >= 10;
-}
-
-function validInstagram(value: string) {
-  return /^[A-Za-z0-9._]{1,30}$/.test(value);
-}
-
 const roles = new Set(["doctor", "owner-manager", "other"]);
 const revenueRanges = new Set(["under-40k", "40k-70k", "70k-100k", "over-100k"]);
 
-async function readPayload(request: Request): Promise<Payload | null> {
-  try {
-    return (await request.json()) as Payload;
-  } catch {
-    return null;
-  }
-}
-
-function metricsPayload(id: string, payload: Payload, status: "started" | "completed", currentStep: number): MetricsLeadPayload {
+function metricsPayload(id: string, payload: Payload, couponCode: string | null): MetricsLeadPayload {
   return {
     sourceLeadId: id,
     name: text(payload.name, 120),
@@ -43,23 +24,17 @@ function metricsPayload(id: string, payload: Payload, status: "started" | "compl
     instagram: text(payload.instagram, 120).replace(/^@/, ""),
     role: text(payload.role, 40) || null,
     otherRole: text(payload.otherRole, 160) || null,
-    crm: text(payload.crm, 40) || null,
-    specialty: text(payload.specialty, 120) || null,
-    city: text(payload.city, 120) || null,
-    clinic: text(payload.clinic, 160) || null,
     revenueRange: text(payload.revenueRange, 40) || null,
-    teamSize: text(payload.teamSize, 40) || null,
-    mainDifficulty: text(payload.mainDifficulty, 1200) || null,
-    objective: text(payload.objective, 1200) || null,
-    bottleneck: text(payload.bottleneck, 1200) || null,
-    ...(status === "completed" ? {
-      whatsappConsent: payload.whatsappConsent === true,
-      consentText: WHATSAPP_MARKETING_CONSENT_TEXT,
-      pageUrl: text(payload.pageUrl, 500),
-      formSubmissionId: id,
-    } : {}),
-    status,
-    currentStep,
+    consent: payload.whatsappConsent === true,
+    whatsappConsent: payload.whatsappConsent === true,
+    consentText: WHATSAPP_MARKETING_CONSENT_TEXT,
+    pageUrl: text(payload.pageUrl, 500),
+    formSubmissionId: id,
+    status: "completed",
+    currentStep: 1,
+    couponCode,
+    registrationType: couponCode ? "complimentary" : "payment_pending",
+    priceCents: 249700,
     utmSource: text(payload.utmSource, 120) || null,
     utmMedium: text(payload.utmMedium, 120) || null,
     utmCampaign: text(payload.utmCampaign, 180) || null,
@@ -68,56 +43,50 @@ function metricsPayload(id: string, payload: Payload, status: "started" | "compl
 }
 
 export async function POST(request: Request) {
-  const payload = await readPayload(request);
-  if (!payload) return NextResponse.json({ error: "Dados inválidos." }, { status: 400 });
+  let payload: Payload;
+  try {
+    payload = (await request.json()) as Payload;
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Invalid payload");
+  } catch {
+    return NextResponse.json({ error: "Dados inválidos." }, { status: 400 });
+  }
+
+  const couponInput = text(payload.couponCode, 80);
+  const couponCode = couponInput ? normalizeCoupon(couponInput) : null;
+  if (couponInput && !couponCode) {
+    return NextResponse.json({ error: "Cupom não reconhecido. Confira o código ou remova-o para continuar com a inscrição paga.", field: "couponCode" }, { status: 400 });
+  }
 
   const id = crypto.randomUUID();
-  if (text(payload.companyWebsite, 100)) return NextResponse.json({ id });
+  if (text(payload.companyWebsite, 100)) return NextResponse.json({ id, access: "free" });
 
-  const lead = metricsPayload(id, payload, "started", 2);
-  if (lead.name.length < 3 || !isEmail(lead.email) || !validPhone(lead.phone) || !validInstagram(lead.instagram)) {
-    return NextResponse.json({ error: "Revise nome, e-mail, WhatsApp e Instagram." }, { status: 400 });
+  const lead = metricsPayload(id, payload, couponCode);
+  const validIdentity = lead.name.length >= 3 && /^\S+@\S+\.\S+$/.test(lead.email)
+    && lead.phone.replace(/\D/g, "").length >= 10
+    && /^[A-Za-z0-9._]{1,30}$/.test(lead.instagram);
+  const validAnswers = roles.has(lead.role || "") && revenueRanges.has(lead.revenueRange || "")
+    && (lead.role !== "other" || (lead.otherRole?.length || 0) >= 2);
+  if (!validIdentity || !validAnswers || typeof payload.whatsappConsent !== "boolean" || !/^https?:\/\//i.test(lead.pageUrl || "")) {
+    return NextResponse.json({ error: "Revise todos os campos obrigatórios antes de concluir." }, { status: 400 });
   }
+
+  // O destino do pagamento é fixado no servidor e nunca aceito do navegador.
+  const checkoutUrl = "https://chk.eduzz.com/1W3223YQ92";
 
   try {
     await syncLeadToMetrics(lead);
   } catch (error) {
     console.error("[leads POST] Metrics sync failed", error instanceof Error ? error.message : error);
-    return NextResponse.json({ error: "Não foi possível registrar a candidatura no Metrics. Tente novamente." }, { status: 502 });
+    return NextResponse.json({ error: "Não foi possível registrar sua inscrição. Tente novamente." }, { status: 502 });
   }
 
-  return NextResponse.json({ id }, { status: 201 });
+  return NextResponse.json(
+    couponCode ? { id, access: "free" } : { id, access: "paid", checkoutUrl },
+    { status: 201 },
+  );
 }
 
-export async function PATCH(request: Request) {
-  const payload = await readPayload(request);
-  if (!payload) return NextResponse.json({ error: "Dados inválidos." }, { status: 400 });
-
-  const id = text(payload.id, 80);
-  if (!id) return NextResponse.json({ error: "Candidatura não encontrada." }, { status: 400 });
-  if (text(payload.companyWebsite, 100)) return NextResponse.json({ id });
-
-  const step = Math.min(4, Math.max(1, Number(payload.currentStep) || 1));
-  const status = payload.status === "completed" ? "completed" : "started";
-  const lead = metricsPayload(id, payload, status, step);
-  if (lead.name.length < 3 || !isEmail(lead.email) || !validPhone(lead.phone) || !validInstagram(lead.instagram)) {
-    return NextResponse.json({ error: "Revise nome, e-mail, WhatsApp e Instagram." }, { status: 400 });
-  }
-
-  if (status === "completed") {
-    const legacyRequired = [lead.crm, lead.specialty, lead.city, lead.clinic, lead.revenueRange, lead.teamSize, lead.mainDifficulty, lead.objective, lead.bottleneck];
-    const validNewAnswers = roles.has(lead.role || "") && revenueRanges.has(lead.revenueRange || "") && (lead.role !== "other" || (lead.otherRole?.length || 0) >= 2);
-    const validLegacyAnswers = !lead.role && legacyRequired.every(Boolean);
-    if ((!validNewAnswers && !validLegacyAnswers) || typeof payload.whatsappConsent !== "boolean" || !/^https?:\/\//i.test(lead.pageUrl || "")) {
-      return NextResponse.json({ error: "Preencha todas as etapas antes de concluir." }, { status: 400 });
-    }
-  }
-
-  try {
-    await syncLeadToMetrics(lead);
-  } catch (error) {
-    console.error("[leads PATCH] Metrics sync failed", error instanceof Error ? error.message : error);
-    return NextResponse.json({ error: "Não foi possível atualizar a candidatura no Metrics. Tente novamente." }, { status: 502 });
-  }
-  return NextResponse.json({ id });
+// Versões antigas da página não conhecem o redirecionamento para pagamento.
+export async function PATCH() {
+  return NextResponse.json({ error: "Atualize a página para usar o novo formulário de inscrição." }, { status: 409 });
 }

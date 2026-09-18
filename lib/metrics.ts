@@ -22,6 +22,9 @@ export type MetricsLeadPayload = {
   consentText?: string;
   pageUrl?: string;
   formSubmissionId?: string;
+  couponCode?: string | null;
+  registrationType?: "complimentary" | "payment_pending";
+  priceCents?: number;
   status: "started" | "completed";
   currentStep: number;
   utmSource?: string | null;
