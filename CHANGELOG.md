@@ -2,7 +2,7 @@
 
 ## 2026-09-18 — Inscrição em página única
 
-- Todas as perguntas aparecem no formulário principal. O investimento de R$ 2.497,00 (10x de R$ 249,70) fica em destaque.
+- Todas as perguntas aparecem no formulário principal. O investimento de R$ 2.497,00 fica em destaque.
 - Cupons de convite válidos concluem a inscrição gratuitamente; sem cupom, o participante segue para o checkout da Eduzz após o registro no Metrics.
 - A opção de receber marketing por WhatsApp continua desmarcada e não é obrigatória.
 

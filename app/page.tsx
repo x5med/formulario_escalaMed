@@ -23,7 +23,7 @@ export default function Home() {
                 Sua clínica está pronta para o próximo nível?
               </h1>
               <p className="mt-5 max-w-lg text-base leading-7 text-white/70">
-                Participe da Imersão EscalaMED. A inscrição custa R$ 2.497,00 ou 10x de R$ 249,70. Com um cupom de convite válido, você participa gratuitamente.
+                Participe da Imersão EscalaMED. A inscrição custa R$ 2.497,00. Com um cupom de convite válido, você participa gratuitamente.
               </p>
             </div>
           </div>
