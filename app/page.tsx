@@ -5,9 +5,12 @@ import { ApplicationForm } from "@/components/application-form";
 
 export default function Home() {
   return (
-    <main className="brand-shell min-h-screen overflow-x-clip bg-[#082943] text-white">
+    <main className="brand-shell relative min-h-screen overflow-hidden bg-[#002647] text-white">
+      <div aria-hidden="true" className="brand-grid absolute inset-0 opacity-35" />
+      <div aria-hidden="true" className="gold-glow absolute -right-32 top-0 h-96 w-96 rounded-full" />
+
       <div className="relative mx-auto grid min-h-screen w-full max-w-[1440px] lg:grid-cols-[minmax(0,0.9fr)_minmax(540px,0.95fr)]">
-        <section className="hero-panel relative isolate flex min-h-[360px] flex-col justify-between px-5 pb-7 pt-6 sm:min-h-[420px] sm:px-9 sm:pt-8 lg:sticky lg:top-0 lg:h-screen lg:min-h-0 lg:px-10 lg:py-8 xl:px-16">
+        <section className="flex flex-col px-5 pb-8 pt-6 sm:px-9 sm:pt-8 lg:min-h-screen lg:justify-between lg:px-10 lg:py-8 xl:px-16">
           <div>
             <Image src="/escalamed-logo-dark.png" alt="EscalaMed" width={675} height={120} priority className="h-auto w-[190px] sm:w-[225px]" />
 
@@ -16,20 +19,13 @@ export default function Home() {
                 <span className="h-px w-12 bg-[#C69858]" />
                 Candidatura 2026
               </div>
-              <h1 className="max-w-[23rem] text-balance text-[clamp(2.5rem,3.5vw,3.65rem)] font-extrabold uppercase leading-[0.98] tracking-[0.005em] text-white">
+              <h1 className="max-w-xl text-balance text-[clamp(2.8rem,4.3vw,4.75rem)] font-extrabold uppercase leading-[0.96] tracking-[0.015em] text-white">
                 Sua clínica está pronta para o próximo nível?
               </h1>
-              <p className="mt-5 max-w-[23rem] text-base leading-7 text-white/85">
+              <p className="mt-5 max-w-lg text-base leading-7 text-white/70">
                 Conte sobre o seu momento atual. A equipe X5Med vai analisar o seu perfil e entrar em contato com os próximos passos.
               </p>
             </div>
-          </div>
-
-          <div className="lg:hidden">
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#D8AC6E]">Candidatura 2026</p>
-            <h1 className="max-w-[19rem] text-balance text-[2.1rem] font-extrabold uppercase leading-[1.02] tracking-[0.005em] text-white sm:max-w-md sm:text-[2.75rem]">
-              Sua clínica está pronta para o próximo nível?
-            </h1>
           </div>
 
           <div className="mt-6 hidden border-t border-white/15 pt-5 lg:block">
@@ -46,11 +42,19 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative flex items-center bg-[#EFF5FA] px-4 pb-5 pt-6 sm:px-8 sm:pb-8 lg:bg-[linear-gradient(135deg,#E9F3FA_0%,#F7FAFD_60%,#E9F1F7_100%)] lg:px-12 lg:py-6 xl:px-16">
+        <section className="relative flex items-center px-4 pb-5 sm:px-8 sm:pb-8 lg:bg-[#F7FAFD] lg:px-12 lg:py-6 xl:px-16">
+          <div aria-hidden="true" className="edge-mark absolute left-0 top-0 hidden h-full w-4 lg:block" />
           <div className="mx-auto w-full max-w-[650px]">
+            <div className="mb-6 lg:hidden">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#C69858]">Candidatura 2026</p>
+              <h1 className="mt-3 max-w-xl text-[2.15rem] font-extrabold uppercase leading-[1.02] tracking-[0.01em] text-white sm:text-[2.75rem]">
+                Sua clínica está pronta para o próximo nível?
+              </h1>
+            </div>
+
             <ApplicationForm />
 
-            <div className="mt-4 flex items-center justify-center gap-2 text-center text-xs text-[#486176]">
+            <div className="mt-4 flex items-center justify-center gap-2 text-center text-xs text-white/55 lg:text-[#486176]">
               <ShieldCheck className="size-4 shrink-0 text-[#C69858]" />
               Seus dados são tratados com segurança e usados apenas pelo EscalaMED.
             </div>
