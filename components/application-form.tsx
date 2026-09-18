@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, Loader2, Ticket } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,11 @@ type WebMcpContext = {
 };
 
 type SubmissionResult = { id: string; access: "free" | "paid"; checkoutUrl?: string };
+type StoredDraft = { id: string; data: ApplicationData; updatedAt: number };
+
+const DRAFT_STORAGE_KEY = "escalamed-registration-draft-v1";
+const DRAFT_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const initialData: ApplicationData = {
   name: "",
@@ -51,6 +56,54 @@ const initialData: ApplicationData = {
   whatsappConsent: false,
   companyWebsite: "",
 };
+
+function hasAnswer(data: ApplicationData) {
+  return [data.name, data.email, data.phone, data.instagram, data.role,
+    data.otherRole, data.revenueRange, data.couponCode].some((value) => value.trim().length > 0);
+}
+
+function readStoredDraft(): StoredDraft | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as Partial<StoredDraft>;
+    if (!uuidPattern.test(saved.id || "") || typeof saved.updatedAt !== "number"
+      || Date.now() - saved.updatedAt > DRAFT_MAX_AGE || !saved.data || typeof saved.data !== "object") return null;
+    const data = { ...initialData };
+    for (const key of Object.keys(initialData) as (keyof ApplicationData)[]) {
+      const value = saved.data[key];
+      if (key === "whatsappConsent") data.whatsappConsent = value === true;
+      else if (typeof value === "string") (data as unknown as Record<string, string>)[key] = value;
+    }
+    return { id: saved.id!, data, updatedAt: saved.updatedAt };
+  } catch {
+    return null;
+  }
+}
+
+function storeDraft(id: string, data: ApplicationData) {
+  try {
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ id, data, updatedAt: Date.now() }));
+  } catch {
+    // O envio ao Metrics continua mesmo quando o armazenamento local está indisponível.
+  }
+}
+
+function requestPayload(data: ApplicationData, id: string, completed: boolean) {
+  const params = new URLSearchParams(window.location.search);
+  const { whatsappConsent, ...answers } = data;
+  return {
+    ...answers,
+    sourceLeadId: id,
+    couponCode: data.couponCode.trim(),
+    utmSource: params.get("utm_source") || "",
+    utmMedium: params.get("utm_medium") || "",
+    utmCampaign: params.get("utm_campaign") || "",
+    referrer: document.referrer,
+    pageUrl: window.location.href,
+    ...(completed ? { whatsappConsent } : {}),
+  };
+}
 
 function formatPhone(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -73,20 +126,11 @@ function validate(data: ApplicationData) {
   return errors;
 }
 
-async function submitApplication(data: ApplicationData): Promise<SubmissionResult> {
-  const params = new URLSearchParams(window.location.search);
+async function submitApplication(data: ApplicationData, id: string): Promise<SubmissionResult> {
   const response = await fetch("/api/leads", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      ...data,
-      couponCode: data.couponCode.trim(),
-      utmSource: params.get("utm_source") || "",
-      utmMedium: params.get("utm_medium") || "",
-      utmCampaign: params.get("utm_campaign") || "",
-      referrer: document.referrer,
-      pageUrl: window.location.href,
-    }),
+    body: JSON.stringify(requestPayload(data, id, true)),
   });
   const result = await response.json() as SubmissionResult & { error?: string };
   if (!response.ok) throw new Error(result.error || "Não foi possível registrar sua inscrição. Tente novamente.");
@@ -101,12 +145,80 @@ function FieldError({ children }: { children?: string }) {
 
 export function ApplicationForm() {
   const [data, setData] = useState<ApplicationData>(initialData);
+  const [draftReady, setDraftReady] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [requestError, setRequestError] = useState("");
   const [loading, setLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState("");
+  const leadIdRef = useRef("");
+  const latestDataRef = useRef<ApplicationData>(initialData);
+  const activeSaveRef = useRef<Promise<void> | null>(null);
+  const pendingSaveRef = useRef<ApplicationData | null>(null);
+  const lastSavedRef = useRef("");
+  const submittingRef = useRef(false);
   const coupon = normalizeCoupon(data.couponCode);
+
+  const leadId = useCallback(() => {
+    if (!leadIdRef.current) leadIdRef.current = crypto.randomUUID();
+    return leadIdRef.current;
+  }, []);
+
+  const savePartial = useCallback((snapshot: ApplicationData): Promise<void> => {
+    if (!hasAnswer(snapshot) || submittingRef.current) return activeSaveRef.current ?? Promise.resolve();
+    const id = leadId();
+    storeDraft(id, snapshot);
+    const signature = JSON.stringify(snapshot);
+    if (signature === lastSavedRef.current && !activeSaveRef.current) return Promise.resolve();
+    pendingSaveRef.current = snapshot;
+    if (activeSaveRef.current) return activeSaveRef.current;
+
+    const task = (async () => {
+      while (pendingSaveRef.current) {
+        const next = pendingSaveRef.current;
+        pendingSaveRef.current = null;
+        const nextSignature = JSON.stringify(next);
+        if (nextSignature === lastSavedRef.current) continue;
+        const response = await fetch("/api/leads", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestPayload(next, id, false)),
+        });
+        if (!response.ok) throw new Error("Não foi possível salvar o rascunho.");
+        lastSavedRef.current = nextSignature;
+      }
+    })();
+    activeSaveRef.current = task;
+    void task.finally(() => { activeSaveRef.current = null; }).catch(() => undefined);
+    return task;
+  }, [leadId]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      const stored = readStoredDraft();
+      if (stored) {
+        leadIdRef.current = stored.id;
+        latestDataRef.current = stored.data;
+        setData(stored.data);
+      } else {
+        leadId();
+      }
+      setDraftReady(true);
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [leadId]);
+
+  useEffect(() => {
+    if (!draftReady || loading || completed || paymentUrl || !hasAnswer(data)) return;
+    const timeout = window.setTimeout(() => { void savePartial(data).catch(() => undefined); }, 700);
+    return () => window.clearTimeout(timeout);
+  }, [data, draftReady, loading, completed, paymentUrl, savePartial]);
+
+  useEffect(() => {
+    const retry = () => { void savePartial(latestDataRef.current).catch(() => undefined); };
+    window.addEventListener("online", retry);
+    return () => window.removeEventListener("online", retry);
+  }, [savePartial]);
 
   useEffect(() => {
     const context = (document as Document & { modelContext?: WebMcpContext }).modelContext;
@@ -151,8 +263,18 @@ export function ApplicationForm() {
         };
         const errors = validate(candidate);
         if (Object.keys(errors).length) throw new Error(Object.values(errors)[0]);
-        const result = await submitApplication(candidate);
+        submittingRef.current = true;
+        await activeSaveRef.current?.catch(() => undefined);
+        let result: SubmissionResult;
+        try {
+          result = await submitApplication(candidate, leadId());
+        } catch (error) {
+          submittingRef.current = false;
+          throw error;
+        }
+        latestDataRef.current = candidate;
         setData(candidate);
+        storeDraft(leadId(), candidate);
         if (result.access === "free") setCompleted(true);
         else {
           setPaymentUrl(result.checkoutUrl!);
@@ -163,12 +285,16 @@ export function ApplicationForm() {
     }, { signal: lifecycle.signal })).catch(() => undefined);
 
     return () => lifecycle.abort();
-  }, []);
+  }, [leadId]);
 
   const update = (field: keyof ApplicationData, value: string | boolean) => {
-    setData((current) => field === "role"
+    const current = latestDataRef.current;
+    const next = field === "role"
       ? { ...current, role: String(value), otherRole: value === "other" ? current.otherRole : "" }
-      : { ...current, [field]: value });
+      : { ...current, [field]: value };
+    latestDataRef.current = next;
+    setData(next);
+    if (draftReady) storeDraft(leadId(), next);
     setErrors((current) => {
       if (!current[field] && (field !== "role" || !current.otherRole)) return current;
       const next = { ...current };
@@ -181,22 +307,26 @@ export function ApplicationForm() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setRequestError("");
-    const nextErrors = validate(data);
+    const snapshot = latestDataRef.current;
+    const nextErrors = validate(snapshot);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
       document.getElementById(Object.keys(nextErrors)[0])?.focus();
       return;
     }
 
+    submittingRef.current = true;
     setLoading(true);
     try {
-      const result = await submitApplication(data);
+      await activeSaveRef.current?.catch(() => undefined);
+      const result = await submitApplication(snapshot, leadId());
       if (result.access === "free") setCompleted(true);
       else {
         setPaymentUrl(result.checkoutUrl!);
         window.location.assign(result.checkoutUrl!);
       }
     } catch (error) {
+      submittingRef.current = false;
       setRequestError(error instanceof Error ? error.message : "Não foi possível registrar sua inscrição. Tente novamente.");
     } finally {
       setLoading(false);
@@ -234,7 +364,7 @@ export function ApplicationForm() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit} onBlur={() => { void savePartial(latestDataRef.current).catch(() => undefined); }} noValidate>
         <input tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px]" value={data.companyWebsite} onChange={(event) => update("companyWebsite", event.target.value)} />
 
         <div className="grid gap-x-4 gap-y-4 xl:grid-cols-2">

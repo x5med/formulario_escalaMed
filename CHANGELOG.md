@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-18 — Captura de respostas parciais
+
+- O formulário salva respostas parciais no Metrics em segundo plano após sair do campo ou parar de digitar.
+- O mesmo identificador é reutilizado ao voltar e na conclusão, atualizando o lead já iniciado.
+
 ## 2026-09-18 — Inscrição em página única
 
 - Todas as perguntas aparecem no formulário principal. O investimento de R$ 2.497,00 fica em destaque.

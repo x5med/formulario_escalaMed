@@ -4,6 +4,8 @@
 
 O formulário envia todas as respostas em uma única submissão ao funil de imersão EscalaMED, incluindo a condição da inscrição, o cupom validado e o preço de R$ 2.497,00. Os cupons aceitos são Fabio, Patricio, Patricia, Vital, Tainara e Convite, sem diferenciar maiúsculas/minúsculas ou acentos.
 
+Cada resposta também é salva em segundo plano como um lead em `Iniciou formulário` após sair do campo ou parar de digitar. Um identificador persistido no navegador permite atualizar o mesmo registro quando a pessoa voltar; ao concluir, o lead passa para `Candidatura`.
+
 - `ESCALAMED_FORM_INGEST_KEY` — segredo compartilhado com o Metrics; obrigatório no runtime e somente no servidor.
 - `METRICS_FORM_INGEST_URL` — opcional; por padrão usa `https://metrics.x5med.com.br/api/endomax/integrations/escalamed-application`.
 - Inscrições sem cupom seguem para o checkout Eduzz: `https://chk.eduzz.com/1W3223YQ92`.

@@ -14,8 +14,9 @@ function text(value: unknown, max = 500) {
 
 const roles = new Set(["doctor", "owner-manager", "other"]);
 const revenueRanges = new Set(["under-40k", "40k-70k", "70k-100k", "over-100k"]);
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-function metricsPayload(id: string, payload: Payload, couponCode: string | null): MetricsLeadPayload {
+function metricsPayload(id: string, payload: Payload, status: "started" | "completed", couponCode: string | null): MetricsLeadPayload {
   return {
     sourceLeadId: id,
     name: text(payload.name, 120),
@@ -25,16 +26,18 @@ function metricsPayload(id: string, payload: Payload, couponCode: string | null)
     role: text(payload.role, 40) || null,
     otherRole: text(payload.otherRole, 160) || null,
     revenueRange: text(payload.revenueRange, 40) || null,
-    consent: payload.whatsappConsent === true,
-    whatsappConsent: payload.whatsappConsent === true,
-    consentText: WHATSAPP_MARKETING_CONSENT_TEXT,
-    pageUrl: text(payload.pageUrl, 500),
-    formSubmissionId: id,
-    status: "completed",
+    ...(status === "completed" ? {
+      consent: payload.whatsappConsent === true,
+      whatsappConsent: payload.whatsappConsent === true,
+      consentText: WHATSAPP_MARKETING_CONSENT_TEXT,
+      pageUrl: text(payload.pageUrl, 500),
+      formSubmissionId: id,
+      registrationType: couponCode ? "complimentary" as const : "payment_pending" as const,
+      priceCents: 249700,
+    } : {}),
+    status,
     currentStep: 1,
     couponCode,
-    registrationType: couponCode ? "complimentary" : "payment_pending",
-    priceCents: 249700,
     utmSource: text(payload.utmSource, 120) || null,
     utmMedium: text(payload.utmMedium, 120) || null,
     utmCampaign: text(payload.utmCampaign, 180) || null,
@@ -42,14 +45,19 @@ function metricsPayload(id: string, payload: Payload, couponCode: string | null)
   };
 }
 
-export async function POST(request: Request) {
-  let payload: Payload;
+async function readPayload(request: Request): Promise<Payload | null> {
   try {
-    payload = (await request.json()) as Payload;
+    const payload = (await request.json()) as Payload;
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Invalid payload");
+    return payload;
   } catch {
-    return NextResponse.json({ error: "Dados inválidos." }, { status: 400 });
+    return null;
   }
+}
+
+export async function POST(request: Request) {
+  const payload = await readPayload(request);
+  if (!payload) return NextResponse.json({ error: "Dados inválidos." }, { status: 400 });
 
   const couponInput = text(payload.couponCode, 80);
   const couponCode = couponInput ? normalizeCoupon(couponInput) : null;
@@ -57,10 +65,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cupom não reconhecido. Confira o código ou remova-o para continuar com a inscrição paga.", field: "couponCode" }, { status: 400 });
   }
 
-  const id = crypto.randomUUID();
+  const requestedId = text(payload.sourceLeadId, 80);
+  if (requestedId && !uuidPattern.test(requestedId)) {
+    return NextResponse.json({ error: "Identificação da inscrição inválida." }, { status: 400 });
+  }
+  const id = requestedId || crypto.randomUUID();
   if (text(payload.companyWebsite, 100)) return NextResponse.json({ id, access: "free" });
 
-  const lead = metricsPayload(id, payload, couponCode);
+  const lead = metricsPayload(id, payload, "completed", couponCode);
   const validIdentity = lead.name.length >= 3 && /^\S+@\S+\.\S+$/.test(lead.email)
     && lead.phone.replace(/\D/g, "").length >= 10
     && /^[A-Za-z0-9._]{1,30}$/.test(lead.instagram);
@@ -86,7 +98,24 @@ export async function POST(request: Request) {
   );
 }
 
-// Versões antigas da página não conhecem o redirecionamento para pagamento.
-export async function PATCH() {
-  return NextResponse.json({ error: "Atualize a página para usar o novo formulário de inscrição." }, { status: 409 });
+export async function PATCH(request: Request) {
+  const payload = await readPayload(request);
+  if (!payload) return NextResponse.json({ error: "Dados inválidos." }, { status: 400 });
+
+  const id = text(payload.sourceLeadId, 80);
+  if (!uuidPattern.test(id)) return NextResponse.json({ error: "Identificação da inscrição inválida." }, { status: 400 });
+  if (text(payload.companyWebsite, 100)) return NextResponse.json({ id });
+
+  const lead = metricsPayload(id, payload, "started", text(payload.couponCode, 80) || null);
+  const hasAnswer = [lead.name, lead.email, lead.phone, lead.instagram, lead.role,
+    lead.otherRole, lead.revenueRange, lead.couponCode].some(Boolean);
+  if (!hasAnswer) return NextResponse.json({ error: "Nenhuma resposta informada." }, { status: 400 });
+
+  try {
+    await syncLeadToMetrics(lead);
+  } catch (error) {
+    console.error("[leads PATCH] Metrics sync failed", error instanceof Error ? error.message : error);
+    return NextResponse.json({ error: "Não foi possível salvar o rascunho." }, { status: 502 });
+  }
+  return NextResponse.json({ id });
 }
