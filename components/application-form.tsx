@@ -232,7 +232,6 @@ export function ApplicationForm() {
         <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <strong className="text-3xl font-extrabold tracking-[-0.06em] sm:text-4xl">R$ 2.497,00</strong>
         </div>
-        <p className="mt-2 text-xs leading-5 text-[#526C80]">Com um cupom válido, sua inscrição fica gratuita.</p>
       </div>
 
       <form onSubmit={handleSubmit} noValidate>
