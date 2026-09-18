@@ -18,6 +18,10 @@ export type MetricsLeadPayload = {
   objective?: string | null;
   bottleneck?: string | null;
   consent?: boolean;
+  whatsappConsent?: boolean;
+  consentText?: string;
+  pageUrl?: string;
+  formSubmissionId?: string;
   status: "started" | "completed";
   currentStep: number;
   utmSource?: string | null;

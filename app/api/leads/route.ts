@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { syncLeadToMetrics, type MetricsLeadPayload } from "@/lib/metrics";
+import { WHATSAPP_MARKETING_CONSENT_TEXT } from "@/lib/consent";
 
 export const runtime = "nodejs";
 
@@ -51,7 +52,12 @@ function metricsPayload(id: string, payload: Payload, status: "started" | "compl
     mainDifficulty: text(payload.mainDifficulty, 1200) || null,
     objective: text(payload.objective, 1200) || null,
     bottleneck: text(payload.bottleneck, 1200) || null,
-    consent: typeof payload.consent === "boolean" ? payload.consent : undefined,
+    ...(status === "completed" ? {
+      whatsappConsent: payload.whatsappConsent === true,
+      consentText: WHATSAPP_MARKETING_CONSENT_TEXT,
+      pageUrl: text(payload.pageUrl, 500),
+      formSubmissionId: id,
+    } : {}),
     status,
     currentStep,
     utmSource: text(payload.utmSource, 120) || null,
@@ -102,7 +108,7 @@ export async function PATCH(request: Request) {
     const legacyRequired = [lead.crm, lead.specialty, lead.city, lead.clinic, lead.revenueRange, lead.teamSize, lead.mainDifficulty, lead.objective, lead.bottleneck];
     const validNewAnswers = roles.has(lead.role || "") && revenueRanges.has(lead.revenueRange || "") && (lead.role !== "other" || (lead.otherRole?.length || 0) >= 2);
     const validLegacyAnswers = !lead.role && legacyRequired.every(Boolean);
-    if ((!validNewAnswers && !validLegacyAnswers) || !lead.consent) {
+    if ((!validNewAnswers && !validLegacyAnswers) || typeof payload.whatsappConsent !== "boolean" || !/^https?:\/\//i.test(lead.pageUrl || "")) {
       return NextResponse.json({ error: "Preencha todas as etapas antes de concluir." }, { status: 400 });
     }
   }

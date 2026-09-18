@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { WHATSAPP_MARKETING_CONSENT_TEXT } from "@/lib/consent";
 
 type FormData = {
   name: string;
@@ -16,7 +17,7 @@ type FormData = {
   role: string;
   otherRole: string;
   revenueRange: string;
-  consent: boolean;
+  whatsappConsent: boolean;
   companyWebsite: string;
 };
 
@@ -42,7 +43,7 @@ const initialData: FormData = {
   role: "",
   otherRole: "",
   revenueRange: "",
-  consent: false,
+  whatsappConsent: false,
   companyWebsite: "",
 };
 
@@ -94,9 +95,9 @@ export function ApplicationForm() {
           role: { type: "string", enum: ["doctor", "owner-manager", "other"], description: "Cargo na clínica" },
           otherRole: { type: "string", description: "Cargo, obrigatório quando role for other" },
           revenueRange: { type: "string", enum: ["under-40k", "40k-70k", "70k-100k", "over-100k"] },
-          consent: { type: "boolean", const: true, description: "Autorização para contato sobre a candidatura" },
+          whatsappConsent: { type: "boolean", description: "Aceite opcional de marketing pelo WhatsApp" },
         },
-        required: [...stringFields, "instagram", "consent"],
+        required: [...stringFields, "instagram"],
         additionalProperties: false,
       },
       annotations: { readOnlyHint: false, untrustedContentHint: false },
@@ -114,10 +115,10 @@ export function ApplicationForm() {
         if (!["doctor", "owner-manager", "other"].includes(candidate.role) || !["under-40k", "40k-70k", "70k-100k", "over-100k"].includes(candidate.revenueRange) || (candidate.role === "other" && candidate.otherRole.length < 2)) {
           throw new Error("Cargo ou faturamento inválido.");
         }
-        if (!/^\S+@\S+\.\S+$/.test(candidate.email) || candidate.phone.replace(/\D/g, "").length < 10 || raw.consent !== true) {
-          throw new Error("E-mail, WhatsApp ou consentimento inválido.");
+        if (!/^\S+@\S+\.\S+$/.test(candidate.email) || candidate.phone.replace(/\D/g, "").length < 10) {
+          throw new Error("E-mail ou WhatsApp inválido.");
         }
-        candidate.consent = true;
+        candidate.whatsappConsent = raw.whatsappConsent === true;
         const tracking = {
           utmSource: new URLSearchParams(window.location.search).get("utm_source") || "",
           utmMedium: new URLSearchParams(window.location.search).get("utm_medium") || "",
@@ -127,7 +128,7 @@ export function ApplicationForm() {
         const started = await fetch("/api/leads", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...candidate, ...tracking, currentStep: 2, status: "started" }) });
         if (!started.ok) throw new Error("Não foi possível iniciar a candidatura.");
         const { id } = (await started.json()) as { id: string };
-        const finished = await fetch("/api/leads", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...candidate, id, currentStep: 2, status: "completed" }) });
+        const finished = await fetch("/api/leads", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...candidate, id, currentStep: 2, status: "completed", pageUrl: window.location.href }) });
         if (!finished.ok) throw new Error("Não foi possível concluir a candidatura.");
         setData(candidate);
         leadIdRef.current = id;
@@ -165,7 +166,6 @@ export function ApplicationForm() {
       if (!["doctor", "owner-manager", "other"].includes(data.role)) next.role = "Selecione seu cargo na clínica.";
       if (data.role === "other" && data.otherRole.trim().length < 2) next.otherRole = "Informe seu cargo.";
       if (!["under-40k", "40k-70k", "70k-100k", "over-100k"].includes(data.revenueRange)) next.revenueRange = "Selecione uma faixa de faturamento.";
-      if (!data.consent) next.consent = "Confirme para enviar a candidatura.";
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -178,7 +178,7 @@ export function ApplicationForm() {
       utmCampaign: new URLSearchParams(window.location.search).get("utm_campaign") || "",
       referrer: document.referrer,
     };
-    const payload = { ...data, ...tracking, currentStep: nextStep, status: final ? "completed" : "started" };
+    const payload = { ...data, ...tracking, currentStep: nextStep, status: final ? "completed" : "started", pageUrl: window.location.href };
     const previousSave = pendingSaveRef.current;
     const save = (async () => {
       // A etapa seguinte aguarda a anterior para não chegar ao Metrics antes do lead inicial.
@@ -289,7 +289,7 @@ export function ApplicationForm() {
           <div className="[&_[data-slot=native-select-wrapper]]:w-full"><Label htmlFor="role" className="mb-2 text-[#173D5D]">Qual seu cargo na clínica? <span aria-hidden="true" className="text-[#B33D3D]">*</span></Label><NativeSelect id="role" autoFocus required className="form-field w-full" value={data.role} onChange={(event) => update("role", event.target.value)} aria-invalid={!!errors.role}><NativeSelectOption value="">Selecione seu cargo</NativeSelectOption><NativeSelectOption value="doctor">Médico</NativeSelectOption><NativeSelectOption value="owner-manager">Dono ou Gestor de clínica</NativeSelectOption><NativeSelectOption value="other">Outros</NativeSelectOption></NativeSelect><FieldError>{errors.role}</FieldError></div>
           {data.role === "other" && <div><Label htmlFor="otherRole" className="mb-2 text-[#173D5D]">Caso tenha selecionado Outro, especifique qual é o seu cargo: <span aria-hidden="true" className="text-[#B33D3D]">*</span></Label><Input id="otherRole" autoFocus required className="form-field" placeholder="Seu cargo na clínica" value={data.otherRole} onChange={(event) => update("otherRole", event.target.value)} aria-invalid={!!errors.otherRole} /><FieldError>{errors.otherRole}</FieldError></div>}
           <div className="[&_[data-slot=native-select-wrapper]]:w-full"><Label htmlFor="revenue" className="mb-2 text-[#173D5D]">Faixa de faturamento por mês <span aria-hidden="true" className="text-[#B33D3D]">*</span></Label><NativeSelect id="revenue" required className="form-field w-full" value={data.revenueRange} onChange={(event) => update("revenueRange", event.target.value)} aria-invalid={!!errors.revenueRange}><NativeSelectOption value="">Selecione uma faixa</NativeSelectOption><NativeSelectOption value="under-40k">&lt; 40 mil</NativeSelectOption><NativeSelectOption value="40k-70k">40 a 70 mil</NativeSelectOption><NativeSelectOption value="70k-100k">70 a 100 mil</NativeSelectOption><NativeSelectOption value="over-100k">&gt; 100 mil</NativeSelectOption></NativeSelect><FieldError>{errors.revenueRange}</FieldError></div>
-          <div><label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#DCE5EC] bg-[#F7FAFD] p-3.5 text-xs leading-5 text-[#526C80]"><input type="checkbox" className="mt-1 size-4 accent-[#002647]" checked={data.consent} onChange={(event) => update("consent", event.target.checked)} /><span>Autorizo o contato da equipe X5Med sobre esta candidatura e conteúdos relacionados ao evento.</span></label><FieldError>{errors.consent}</FieldError></div>
+          <div className="flex items-start gap-3 rounded-xl border border-[#DCE5EC] bg-[#F7FAFD] p-3.5 text-xs leading-5 text-[#526C80]"><input id="whatsapp-consent" type="checkbox" className="mt-1 size-4 shrink-0 accent-[#002647]" checked={data.whatsappConsent} onChange={(event) => update("whatsappConsent", event.target.checked)} /><div><label htmlFor="whatsapp-consent" className="cursor-pointer">{WHATSAPP_MARKETING_CONSENT_TEXT}</label><a className="mt-1 block font-semibold text-[#002647] underline" href="https://metrics.x5med.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Política de Privacidade ↗</a></div></div>
         </div>}
 
         {requestError && <p role="alert" className="mt-5 rounded-xl bg-[#FFF1F1] px-4 py-3 text-sm text-[#A63838]">{requestError}</p>}
