@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-21 — Novo cupom EscalaMed
+
+- O cupom `EscalaMed` libera a inscrição gratuita e aceita variações de maiúsculas e minúsculas, seguindo a mesma normalização dos outros cupons.
+
 ## 2026-09-18 — Captura de respostas parciais
 
 - O formulário salva respostas parciais no Metrics em segundo plano após sair do campo ou parar de digitar.
