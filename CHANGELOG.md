@@ -2,7 +2,7 @@
 
 ## 2026-09-21 — Novo cupom EscalaMed
 
-- O cupom `EscalaMed` libera a inscrição gratuita e aceita variações de maiúsculas e minúsculas, seguindo a mesma normalização dos outros cupons.
+- O cupom `EscalaMed` libera a inscrição gratuita e aceita variações de maiúsculas, minúsculas e espaços, incluindo `Escala Med`.
 
 ## 2026-09-18 — Captura de respostas parciais
 

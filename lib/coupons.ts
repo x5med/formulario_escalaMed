@@ -9,6 +9,6 @@ const coupons = new Map([
 ]);
 
 export function normalizeCoupon(value: string): string | null {
-  const key = value.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const key = value.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toLowerCase();
   return coupons.get(key) ?? null;
 }
