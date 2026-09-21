@@ -2,7 +2,7 @@
 
 ## Integração com o Metrics
 
-O formulário envia todas as respostas em uma única submissão ao funil de imersão EscalaMED, incluindo a condição da inscrição, o cupom validado e o preço de R$ 2.497,00. Os cupons aceitos são Fabio, Patricio, Patricia, Vital, Tainara, Convite e EscalaMed, sem diferenciar maiúsculas/minúsculas, acentos ou espaços. Assim, `Escala Med` também é aceito.
+O formulário envia todas as respostas em uma única submissão ao funil de imersão EscalaMED, incluindo a condição da inscrição, o cupom validado e o preço de R$ 2.497,00. Os cupons aceitos são Fabio, Patricio, Patricia, Vital, Tainara, Convite e EscalaMed, sem diferenciar maiúsculas/minúsculas, acentos ou espaços. Ao reconhecer uma variação válida, o campo corrige o texto para o formato oficial; por exemplo, `Escala Med` passa a `EscalaMed`.
 
 Cada resposta também é salva em segundo plano como um lead em `Iniciou formulário` após sair do campo ou parar de digitar. Um identificador persistido no navegador permite atualizar o mesmo registro quando a pessoa voltar; ao concluir, o lead passa para `Candidatura`.
 
