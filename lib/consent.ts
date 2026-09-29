@@ -1,1 +1,1 @@
-export const WHATSAPP_MARKETING_CONSENT_TEXT = "Quero receber pelo WhatsApp informações, conteúdos e ofertas da X5 Med sobre este programa. Posso cancelar a qualquer momento respondendo PARAR.";
+export const WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT = "Quero que a equipe X5 Med entre em contato comigo pelo WhatsApp para dar continuidade à minha inscrição neste evento. Posso cancelar a qualquer momento respondendo PARAR.";

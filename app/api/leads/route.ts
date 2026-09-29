@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { WHATSAPP_MARKETING_CONSENT_TEXT } from "@/lib/consent";
+import { WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
 import { normalizeCoupon } from "@/lib/coupons";
 import { syncLeadToMetrics, type MetricsLeadPayload } from "@/lib/metrics";
 
@@ -29,7 +29,7 @@ function metricsPayload(id: string, payload: Payload, status: "started" | "compl
     ...(status === "completed" ? {
       consent: payload.whatsappConsent === true,
       whatsappConsent: payload.whatsappConsent === true,
-      consentText: WHATSAPP_MARKETING_CONSENT_TEXT,
+      consentText: WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT,
       pageUrl: text(payload.pageUrl, 500),
       formSubmissionId: id,
       registrationType: couponCode ? "complimentary" as const : "payment_pending" as const,

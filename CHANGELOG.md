@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-29 — Contato para continuidade da inscrição
+
+- O texto opcional do WhatsApp agora informa que a equipe X5 Med entrará em contato para dar continuidade à inscrição no evento.
+- A mesma frase é enviada ao Metrics para compor a evidência do aceite.
+
 ## 2026-09-21 — Novo cupom EscalaMed
 
 - O cupom `EscalaMed` libera a inscrição gratuita e aceita variações de maiúsculas, minúsculas e espaços, incluindo `Escala Med`. Quando uma variação válida é reconhecida, o campo a corrige automaticamente para o formato oficial.
