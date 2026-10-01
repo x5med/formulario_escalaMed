@@ -9,6 +9,17 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
 import { formatCouponInput, normalizeCoupon } from "@/lib/coupons";
+import {
+  decorateUrl,
+  FORM_ID,
+  FORM_NAME,
+  PRODUCT_ITEM,
+  PRODUCT_VALUE,
+  pushTrackingEvent,
+  readAttribution,
+  trackAndNavigate,
+  userData,
+} from "@/lib/tracking";
 
 type ApplicationData = {
   name: string;
@@ -90,15 +101,21 @@ function storeDraft(id: string, data: ApplicationData) {
 }
 
 function requestPayload(data: ApplicationData, id: string, completed: boolean) {
-  const params = new URLSearchParams(window.location.search);
+  const attribution = readAttribution();
   const { whatsappConsent, ...answers } = data;
   return {
     ...answers,
     sourceLeadId: id,
     couponCode: data.couponCode.trim(),
-    utmSource: params.get("utm_source") || "",
-    utmMedium: params.get("utm_medium") || "",
-    utmCampaign: params.get("utm_campaign") || "",
+    utmSource: attribution.utm_source || "",
+    utmMedium: attribution.utm_medium || "",
+    utmCampaign: attribution.utm_campaign || "",
+    utmContent: attribution.utm_content || "",
+    utmTerm: attribution.utm_term || "",
+    gclid: attribution.gclid || "",
+    fbclid: attribution.fbclid || "",
+    wbraid: attribution.wbraid || "",
+    gbraid: attribution.gbraid || "",
     referrer: document.referrer,
     pageUrl: window.location.href,
     ...(completed ? { whatsappConsent } : {}),
@@ -157,6 +174,8 @@ export function ApplicationForm() {
   const pendingSaveRef = useRef<ApplicationData | null>(null);
   const lastSavedRef = useRef("");
   const submittingRef = useRef(false);
+  const formStartedRef = useRef(false);
+  const couponTrackedRef = useRef("");
   const coupon = normalizeCoupon(data.couponCode);
 
   const leadId = useCallback(() => {
@@ -192,6 +211,70 @@ export function ApplicationForm() {
     void task.finally(() => { activeSaveRef.current = null; }).catch(() => undefined);
     return task;
   }, [leadId]);
+
+  const trackFormStart = useCallback(() => {
+    if (formStartedRef.current) return;
+    formStartedRef.current = true;
+    pushTrackingEvent("form_start", {
+      form_id: FORM_ID,
+      form_name: FORM_NAME,
+      lead_id: leadId(),
+    });
+  }, [leadId]);
+
+  const trackValidationError = useCallback((field: string, message: string, type = "validation") => {
+    pushTrackingEvent("form_error", {
+      form_id: FORM_ID,
+      form_name: FORM_NAME,
+      error_field: field,
+      error_message: message,
+      error_type: type,
+    });
+  }, []);
+
+  const finishSubmission = useCallback((candidate: ApplicationData, result: SubmissionResult) => {
+    const complimentary = result.access === "free";
+    const trackingUserData = userData(candidate.email, candidate.phone);
+    const normalizedCoupon = normalizeCoupon(candidate.couponCode) || "";
+    pushTrackingEvent("generate_lead", {
+      form_id: FORM_ID,
+      form_name: FORM_NAME,
+      lead_id: result.id,
+      lead_type: complimentary ? "complimentary" : "payment_pending",
+      currency: "BRL",
+      value: complimentary ? 0 : PRODUCT_VALUE,
+      user_data: trackingUserData,
+    });
+
+    if (complimentary) {
+      pushTrackingEvent("sign_up", {
+        method: "coupon",
+        form_id: FORM_ID,
+        lead_id: result.id,
+        coupon: normalizedCoupon,
+        user_data: trackingUserData,
+      });
+      setCompleted(true);
+      return;
+    }
+
+    const checkoutUrl = decorateUrl(result.checkoutUrl!);
+    setPaymentUrl(checkoutUrl);
+    trackAndNavigate("begin_checkout", {
+      form_id: FORM_ID,
+      lead_id: result.id,
+      currency: "BRL",
+      value: PRODUCT_VALUE,
+      coupon: normalizedCoupon,
+      user_data: trackingUserData,
+      ecommerce: {
+        currency: "BRL",
+        value: PRODUCT_VALUE,
+        coupon: normalizedCoupon || undefined,
+        items: [PRODUCT_ITEM],
+      },
+    }, checkoutUrl);
+  }, []);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -262,7 +345,11 @@ export function ApplicationForm() {
           whatsappConsent: raw.whatsappConsent === true,
         };
         const errors = validate(candidate);
-        if (Object.keys(errors).length) throw new Error(Object.values(errors)[0]);
+        if (Object.keys(errors).length) {
+          const firstField = Object.keys(errors)[0];
+          trackValidationError(firstField, errors[firstField]);
+          throw new Error(errors[firstField]);
+        }
         submittingRef.current = true;
         await activeSaveRef.current?.catch(() => undefined);
         let result: SubmissionResult;
@@ -275,17 +362,13 @@ export function ApplicationForm() {
         latestDataRef.current = candidate;
         setData(candidate);
         storeDraft(leadId(), candidate);
-        if (result.access === "free") setCompleted(true);
-        else {
-          setPaymentUrl(result.checkoutUrl!);
-          window.location.assign(result.checkoutUrl!);
-        }
+        finishSubmission(candidate, result);
         return { id: result.id, status: result.access === "free" ? "completed" : "payment_pending", checkoutUrl: result.checkoutUrl };
       },
     }, { signal: lifecycle.signal })).catch(() => undefined);
 
     return () => lifecycle.abort();
-  }, [leadId]);
+  }, [finishSubmission, leadId, trackValidationError]);
 
   const update = (field: keyof ApplicationData, value: string | boolean) => {
     const current = latestDataRef.current;
@@ -311,7 +394,9 @@ export function ApplicationForm() {
     const nextErrors = validate(snapshot);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
-      document.getElementById(Object.keys(nextErrors)[0])?.focus();
+      const firstField = Object.keys(nextErrors)[0];
+      trackValidationError(firstField, nextErrors[firstField]);
+      document.getElementById(firstField)?.focus();
       return;
     }
 
@@ -320,14 +405,12 @@ export function ApplicationForm() {
     try {
       await activeSaveRef.current?.catch(() => undefined);
       const result = await submitApplication(snapshot, leadId());
-      if (result.access === "free") setCompleted(true);
-      else {
-        setPaymentUrl(result.checkoutUrl!);
-        window.location.assign(result.checkoutUrl!);
-      }
+      finishSubmission(snapshot, result);
     } catch (error) {
       submittingRef.current = false;
-      setRequestError(error instanceof Error ? error.message : "Não foi possível registrar sua inscrição. Tente novamente.");
+      const message = error instanceof Error ? error.message : "Não foi possível registrar sua inscrição. Tente novamente.";
+      trackValidationError("submission", message, "server");
+      setRequestError(message);
     } finally {
       setLoading(false);
     }
@@ -364,7 +447,12 @@ export function ApplicationForm() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} onBlur={() => { void savePartial(latestDataRef.current).catch(() => undefined); }} noValidate>
+      <form
+        onSubmit={handleSubmit}
+        onFocusCapture={trackFormStart}
+        onBlur={() => { void savePartial(latestDataRef.current).catch(() => undefined); }}
+        noValidate
+      >
         <input tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px]" value={data.companyWebsite} onChange={(event) => update("companyWebsite", event.target.value)} />
 
         <div className="grid gap-x-4 gap-y-4 xl:grid-cols-2">
@@ -375,7 +463,14 @@ export function ApplicationForm() {
           <div className="[&_[data-slot=native-select-wrapper]]:w-full"><Label htmlFor="role" className="mb-2 text-[#173D5D]">Qual seu cargo na clínica? *</Label><NativeSelect id="role" required className="form-field w-full" value={data.role} onChange={(event) => update("role", event.target.value)} aria-invalid={!!errors.role}><NativeSelectOption value="">Selecione seu cargo</NativeSelectOption><NativeSelectOption value="doctor">Médico</NativeSelectOption><NativeSelectOption value="owner-manager">Dono ou Gestor de clínica</NativeSelectOption><NativeSelectOption value="other">Outros</NativeSelectOption></NativeSelect><FieldError>{errors.role}</FieldError></div>
           <div className="[&_[data-slot=native-select-wrapper]]:w-full"><Label htmlFor="revenueRange" className="mb-2 text-[#173D5D]">Faixa de faturamento por mês *</Label><NativeSelect id="revenueRange" required className="form-field w-full" value={data.revenueRange} onChange={(event) => update("revenueRange", event.target.value)} aria-invalid={!!errors.revenueRange}><NativeSelectOption value="">Selecione uma faixa</NativeSelectOption><NativeSelectOption value="under-40k">&lt; 40 mil</NativeSelectOption><NativeSelectOption value="40k-70k">40 a 70 mil</NativeSelectOption><NativeSelectOption value="70k-100k">70 a 100 mil</NativeSelectOption><NativeSelectOption value="over-100k">&gt; 100 mil</NativeSelectOption></NativeSelect><FieldError>{errors.revenueRange}</FieldError></div>
           {data.role === "other" && <div className="xl:col-span-2"><Label htmlFor="otherRole" className="mb-2 text-[#173D5D]">Caso tenha selecionado Outros, especifique seu cargo *</Label><Input id="otherRole" required className="form-field" placeholder="Seu cargo na clínica" value={data.otherRole} onChange={(event) => update("otherRole", event.target.value)} aria-invalid={!!errors.otherRole} /><FieldError>{errors.otherRole}</FieldError></div>}
-          <div className="xl:col-span-2"><Label htmlFor="couponCode" className="mb-2 text-[#173D5D]">Tem um cupom de convite?</Label><Input id="couponCode" autoCapitalize="none" autoComplete="off" spellCheck={false} maxLength={80} className="form-field" placeholder="Digite seu cupom (opcional)" value={data.couponCode} onChange={(event) => update("couponCode", formatCouponInput(event.target.value))} aria-invalid={!!errors.couponCode || !!(data.couponCode.trim() && !coupon)} /><FieldError>{errors.couponCode}</FieldError>{coupon ? <p className="mt-1.5 text-xs font-semibold text-[#1F7558]">Cupom aplicado: sua inscrição será gratuita.</p> : data.couponCode.trim() && !errors.couponCode ? <p className="mt-1.5 text-xs font-medium text-[#B33D3D]">Cupom não reconhecido. Confira o código ou remova-o para continuar com a inscrição paga.</p> : null}</div>
+          <div className="xl:col-span-2"><Label htmlFor="couponCode" className="mb-2 text-[#173D5D]">Tem um cupom de convite?</Label><Input id="couponCode" autoCapitalize="none" autoComplete="off" spellCheck={false} maxLength={80} className="form-field" placeholder="Digite seu cupom (opcional)" value={data.couponCode} onChange={(event) => update("couponCode", formatCouponInput(event.target.value))} onBlur={() => {
+            const typedCoupon = latestDataRef.current.couponCode.trim();
+            if (!typedCoupon || couponTrackedRef.current === typedCoupon) return;
+            couponTrackedRef.current = typedCoupon;
+            const validCoupon = normalizeCoupon(typedCoupon);
+            if (validCoupon) pushTrackingEvent("coupon_applied", { coupon_code: validCoupon, coupon_valid: true, form_id: FORM_ID });
+            else trackValidationError("couponCode", "Cupom não reconhecido.");
+          }} aria-invalid={!!errors.couponCode || !!(data.couponCode.trim() && !coupon)} /><FieldError>{errors.couponCode}</FieldError>{coupon ? <p className="mt-1.5 text-xs font-semibold text-[#1F7558]">Cupom aplicado: sua inscrição será gratuita.</p> : data.couponCode.trim() && !errors.couponCode ? <p className="mt-1.5 text-xs font-medium text-[#B33D3D]">Cupom não reconhecido. Confira o código ou remova-o para continuar com a inscrição paga.</p> : null}</div>
           <div className="xl:col-span-2 flex items-start gap-3 rounded-xl border border-[#DCE5EC] bg-[#F7FAFD] p-3.5 text-xs leading-5 text-[#526C80]"><input id="whatsapp-consent" type="checkbox" className="mt-1 size-4 shrink-0 accent-[#002647]" checked={data.whatsappConsent} onChange={(event) => update("whatsappConsent", event.target.checked)} /><div><label htmlFor="whatsapp-consent" className="cursor-pointer">{WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT}</label><a className="mt-1 block font-semibold text-[#002647] underline" href="https://metrics.x5med.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Política de Privacidade ↗</a></div></div>
         </div>
 

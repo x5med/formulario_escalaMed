@@ -10,6 +10,22 @@ Cada resposta também é salva em segundo plano como um lead em `Iniciou formul�
 - `METRICS_FORM_INGEST_URL` — opcional; por padrão usa `https://metrics.x5med.com.br/api/endomax/integrations/escalamed-application`.
 - Inscrições sem cupom seguem para o checkout Eduzz: `https://chk.eduzz.com/1W3223YQ92`.
 
+## Tracking e confirmação de compra
+
+O GTM `GTM-M4GT66JQ` roda com Consent Mode v2 e a preferência é compartilhada pelos subdomínios `*.x5med.com.br`. O formulário preserva UTMs e identificadores de clique e os encaminha ao checkout. A compra é registrada pelo webhook assinado da Eduzz em `/api/webhooks/eduzz`, somente para `myeduzz.invoice_paid`, usando o ID da transação para deduplicação.
+
+- `EDUZZ_WEBHOOK_SECRET` — chave HMAC SHA-256 configurada no Developer Hub da Eduzz.
+- `EDUZZ_ESCALAMED_PRODUCT_ID` — ID do produto EscalaMED; recomendado para filtrar o webhook.
+- `GA4_MEASUREMENT_ID` — ID do fluxo web (por exemplo, `G-...`).
+- `GA4_API_SECRET` — segredo do Measurement Protocol criado no fluxo do GA4.
+- `META_PIXEL_ID` e `META_CONVERSIONS_API_TOKEN` — opcionais para Meta CAPI pelo webhook.
+- `META_GRAPH_API_VERSION` — opcional; padrão `v24.0`.
+- `META_TEST_EVENT_CODE` — opcional e temporário para validar em Eventos de Teste.
+
+Se o Pixel/CAPI for configurado diretamente no checkout da Eduzz, não configure também as variáveis `META_*` deste webhook sem uma estratégia de deduplicação comum, para evitar duas integrações server-side enviando a mesma compra.
+
+O diretório `tracking/` contém o export importável do GTM e o gerador usado para recriá-lo a partir de uma versão exportada do contêiner. O pacote inclui os eventos da landing page e do formulário, ecommerce em `begin_checkout` e Conversion Linker; `user_data` fica reservado às tags de conversão e não é mapeado para o GA4.
+
 ## Hospedagem na Vercel
 
 O projeto usa o runtime padrão do Next.js na Vercel. O Metrics é a fonte persistente das candidaturas, portanto a API não depende de Cloudflare D1 em produção.

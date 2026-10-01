@@ -41,6 +41,12 @@ function metricsPayload(id: string, payload: Payload, status: "started" | "compl
     utmSource: text(payload.utmSource, 120) || null,
     utmMedium: text(payload.utmMedium, 120) || null,
     utmCampaign: text(payload.utmCampaign, 180) || null,
+    utmContent: text(payload.utmContent, 180) || null,
+    utmTerm: text(payload.utmTerm, 180) || null,
+    gclid: text(payload.gclid, 250) || null,
+    fbclid: text(payload.fbclid, 250) || null,
+    wbraid: text(payload.wbraid, 250) || null,
+    gbraid: text(payload.gbraid, 250) || null,
     referrer: text(payload.referrer, 500) || null,
   };
 }

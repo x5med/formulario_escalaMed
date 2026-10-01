@@ -30,6 +30,12 @@ export type MetricsLeadPayload = {
   utmSource?: string | null;
   utmMedium?: string | null;
   utmCampaign?: string | null;
+  utmContent?: string | null;
+  utmTerm?: string | null;
+  gclid?: string | null;
+  fbclid?: string | null;
+  wbraid?: string | null;
+  gbraid?: string | null;
   referrer?: string | null;
 };
 
