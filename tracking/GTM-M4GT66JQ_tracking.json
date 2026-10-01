@@ -5,7 +5,7 @@
     "accountId": "6379820176",
     "containerId": "265696899",
     "name": "Tracking completo EscalaMED",
-    "description": "Eventos GA4 do funil EscalaMED, ecommerce begin_checkout e Conversion Linker. user_data não é enviado ao GA4.",
+    "description": "Funil EscalaMED em GA4, Google Ads e Meta. Purchase é enviado pelo webhook assinado da Eduzz para GA4 Measurement Protocol e Meta Conversions API.",
     "container": {
       "path": "accounts/6379820176/containers/265696899",
       "accountId": "6379820176",
@@ -498,6 +498,90 @@
         },
         "consentSettings": {
           "consentStatus": "NOT_SET"
+        }
+      },
+      {
+        "accountId": "6379820176",
+        "containerId": "265696899",
+        "tagId": "7",
+        "name": "Meta | EscalaMED | Base + PageView",
+        "type": "html",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "html",
+            "value": "<script>\n!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');\nfbq('init','1436597411907868');\nfbq('track','PageView');\n</script>\n<noscript><img height=\"1\" width=\"1\" style=\"display:none\" src=\"https://www.facebook.com/tr?id=1436597411907868&ev=PageView&noscript=1\" /></noscript>"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "supportDocumentWrite",
+            "value": "false"
+          }
+        ],
+        "firingTriggerId": [
+          "2147479553"
+        ],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NEEDED",
+          "consentType": {
+            "type": "LIST",
+            "list": [
+              {
+                "type": "TEMPLATE",
+                "value": "ad_storage"
+              },
+              {
+                "type": "TEMPLATE",
+                "value": "ad_user_data"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "accountId": "6379820176",
+        "containerId": "265696899",
+        "tagId": "8",
+        "name": "Meta | EscalaMED | Eventos do funil",
+        "type": "html",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "html",
+            "value": "<script>var e='{{Event}}';var m={generate_lead:'Lead',sign_up:'CompleteRegistration',begin_checkout:'InitiateCheckout'}[e];if(m&&window.fbq){fbq('track',m,{content_name:'EscalaMED'});}</script>"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "supportDocumentWrite",
+            "value": "false"
+          }
+        ],
+        "firingTriggerId": [
+          "5"
+        ],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NEEDED",
+          "consentType": {
+            "type": "LIST",
+            "list": [
+              {
+                "type": "TEMPLATE",
+                "value": "ad_storage"
+              },
+              {
+                "type": "TEMPLATE",
+                "value": "ad_user_data"
+              }
+            ]
+          }
         }
       }
     ],
