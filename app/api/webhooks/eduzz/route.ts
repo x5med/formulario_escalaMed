@@ -43,10 +43,25 @@ type EduzzInvoicePaid = {
 };
 
 function secureSignature(rawBody: string, signature: string, secret: string) {
-  const supplied = signature.trim().replace(/^sha256=/i, "").toLowerCase();
-  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
-  if (!/^[a-f0-9]{64}$/.test(supplied)) return false;
-  return timingSafeEqual(Buffer.from(supplied, "hex"), Buffer.from(expected, "hex"));
+  const supplied = signature.trim().replace(/^sha256=/i, "");
+  const expected = createHmac("sha256", secret).update(rawBody).digest();
+
+  const candidates: Buffer[] = [];
+  if (/^[a-f0-9]{64}$/i.test(supplied)) {
+    candidates.push(Buffer.from(supplied, "hex"));
+  }
+
+  try {
+    const normalizedBase64 = supplied.replace(/-/g, "+").replace(/_/g, "/");
+    const decoded = Buffer.from(normalizedBase64, "base64");
+    if (decoded.length === expected.length) candidates.push(decoded);
+  } catch {
+    // Formato desconhecido: a assinatura será recusada abaixo.
+  }
+
+  return candidates.some((candidate) => (
+    candidate.length === expected.length && timingSafeEqual(candidate, expected)
+  ));
 }
 
 function sha256(value: string) {
