@@ -432,6 +432,51 @@
                   {
                     "type": "TEMPLATE",
                     "key": "name",
+                    "value": "cargo"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{DLV | cargo}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "faixa_faturamento"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{DLV | faixa_faturamento}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "has_coupon"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{DLV | has_coupon}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
                     "value": "currency"
                   },
                   {
@@ -552,7 +597,7 @@
           {
             "type": "TEMPLATE",
             "key": "html",
-            "value": "<script>var e='{{Event}}';var m={generate_lead:'Lead',sign_up:'CompleteRegistration',begin_checkout:'InitiateCheckout'}[e];if(m&&window.fbq){fbq('track',m,{content_name:'EscalaMED'});}</script>"
+            "value": "<script>var e='{{Event}}';var m={generate_lead:'Lead',sign_up:'CompleteRegistration',begin_checkout:'InitiateCheckout'}[e];if(m&&window.fbq){var em='{{DLV | user_data.email_address}}';var ph='{{DLV | user_data.phone_number}}';if(em||ph){var ud={};if(em)ud.em=em;if(ph)ud.ph=ph;fbq('init','1436597411907868',ud);}fbq('track',m,{content_name:'EscalaMED'});}</script>"
           },
           {
             "type": "BOOLEAN",
@@ -1189,6 +1234,78 @@
         "accountId": "6379820176",
         "containerId": "265696899",
         "variableId": "31",
+        "name": "DLV | cargo",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "setDefaultValue",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "cargo"
+          }
+        ]
+      },
+      {
+        "accountId": "6379820176",
+        "containerId": "265696899",
+        "variableId": "32",
+        "name": "DLV | faixa_faturamento",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "setDefaultValue",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "faixa_faturamento"
+          }
+        ]
+      },
+      {
+        "accountId": "6379820176",
+        "containerId": "265696899",
+        "variableId": "33",
+        "name": "DLV | has_coupon",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "setDefaultValue",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "has_coupon"
+          }
+        ]
+      },
+      {
+        "accountId": "6379820176",
+        "containerId": "265696899",
+        "variableId": "34",
         "name": "DLV | currency",
         "type": "v",
         "parameter": [
@@ -1212,7 +1329,7 @@
       {
         "accountId": "6379820176",
         "containerId": "265696899",
-        "variableId": "32",
+        "variableId": "35",
         "name": "DLV | value",
         "type": "v",
         "parameter": [
@@ -1236,7 +1353,7 @@
       {
         "accountId": "6379820176",
         "containerId": "265696899",
-        "variableId": "33",
+        "variableId": "36",
         "name": "DLV | method",
         "type": "v",
         "parameter": [
@@ -1260,7 +1377,7 @@
       {
         "accountId": "6379820176",
         "containerId": "265696899",
-        "variableId": "34",
+        "variableId": "37",
         "name": "DLV | coupon",
         "type": "v",
         "parameter": [
@@ -1278,6 +1395,54 @@
             "type": "TEMPLATE",
             "key": "name",
             "value": "coupon"
+          }
+        ]
+      },
+      {
+        "accountId": "6379820176",
+        "containerId": "265696899",
+        "variableId": "38",
+        "name": "DLV | user_data.email_address",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "setDefaultValue",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "user_data.email_address"
+          }
+        ]
+      },
+      {
+        "accountId": "6379820176",
+        "containerId": "265696899",
+        "variableId": "39",
+        "name": "DLV | user_data.phone_number",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "setDefaultValue",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "user_data.phone_number"
           }
         ]
       }

@@ -55,6 +55,19 @@ const DRAFT_STORAGE_KEY = "escalamed-registration-draft-v1";
 const DRAFT_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+const roleTrackingLabels: Record<string, string> = {
+  doctor: "Médico",
+  "owner-manager": "Dono ou Gestor de clínica",
+  other: "Outros",
+};
+
+const revenueTrackingLabels: Record<string, string> = {
+  "under-40k": "< 40 mil",
+  "40k-70k": "40 a 70 mil",
+  "70k-100k": "70 a 100 mil",
+  "over-100k": "> 100 mil",
+};
+
 const initialData: ApplicationData = {
   name: "",
   email: "",
@@ -241,6 +254,9 @@ export function ApplicationForm() {
       form_name: FORM_NAME,
       lead_id: result.id,
       lead_type: complimentary ? "complimentary" : "payment_pending",
+      cargo: roleTrackingLabels[candidate.role] || candidate.role,
+      faixa_faturamento: revenueTrackingLabels[candidate.revenueRange] || candidate.revenueRange,
+      has_coupon: Boolean(normalizedCoupon),
       currency: "BRL",
       value: complimentary ? 0 : PRODUCT_VALUE,
       user_data: trackingUserData,
@@ -248,7 +264,7 @@ export function ApplicationForm() {
 
     if (complimentary) {
       pushTrackingEvent("sign_up", {
-        method: "coupon",
+        method: "cupom_convite",
         form_id: FORM_ID,
         lead_id: result.id,
         coupon: normalizedCoupon,
@@ -468,8 +484,12 @@ export function ApplicationForm() {
             if (!typedCoupon || couponTrackedRef.current === typedCoupon) return;
             couponTrackedRef.current = typedCoupon;
             const validCoupon = normalizeCoupon(typedCoupon);
-            if (validCoupon) pushTrackingEvent("coupon_applied", { coupon_code: validCoupon, coupon_valid: true, form_id: FORM_ID });
-            else trackValidationError("couponCode", "Cupom não reconhecido.");
+            pushTrackingEvent("coupon_applied", {
+              coupon: validCoupon || typedCoupon,
+              coupon_valid: Boolean(validCoupon),
+              form_id: FORM_ID,
+            });
+            if (!validCoupon) trackValidationError("couponCode", "Cupom não reconhecido.");
           }} aria-invalid={!!errors.couponCode || !!(data.couponCode.trim() && !coupon)} /><FieldError>{errors.couponCode}</FieldError>{coupon ? <p className="mt-1.5 text-xs font-semibold text-[#1F7558]">Cupom aplicado: sua inscrição será gratuita.</p> : data.couponCode.trim() && !errors.couponCode ? <p className="mt-1.5 text-xs font-medium text-[#B33D3D]">Cupom não reconhecido. Confira o código ou remova-o para continuar com a inscrição paga.</p> : null}</div>
           <div className="xl:col-span-2 flex items-start gap-3 rounded-xl border border-[#DCE5EC] bg-[#F7FAFD] p-3.5 text-xs leading-5 text-[#526C80]"><input id="whatsapp-consent" type="checkbox" className="mt-1 size-4 shrink-0 accent-[#002647]" checked={data.whatsappConsent} onChange={(event) => update("whatsappConsent", event.target.checked)} /><div><label htmlFor="whatsapp-consent" className="cursor-pointer">{WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT}</label><a className="mt-1 block font-semibold text-[#002647] underline" href="https://metrics.x5med.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Política de Privacidade ↗</a></div></div>
         </div>

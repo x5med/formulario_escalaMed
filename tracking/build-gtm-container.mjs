@@ -50,11 +50,18 @@ const dataLayerVariables = [
   "coupon_code",
   "coupon_valid",
   "lead_type",
+  "cargo",
+  "faixa_faturamento",
+  "has_coupon",
   "currency",
   "value",
   "method",
   "coupon",
+  "user_data.email_address",
+  "user_data.phone_number",
 ];
+
+const ga4EventParameters = dataLayerVariables.filter((name) => !name.startsWith("user_data."));
 
 const dataLayerVariable = (name, index) => ({
   accountId: version.accountId,
@@ -165,7 +172,7 @@ version.tag = [
       { type: "TEMPLATE", key: "getEcommerceDataFrom", value: "dataLayer" },
       { type: "TEMPLATE", key: "eventName", value: "{{Event}}" },
       { type: "TEMPLATE", key: "measurementIdOverride", value: "G-72KF9X3YP4" },
-      { type: "LIST", key: "eventParameters", list: dataLayerVariables.map(eventParameter) },
+      { type: "LIST", key: "eventParameters", list: ga4EventParameters.map(eventParameter) },
     ],
     firingTriggerId: ["5"],
     tagFiringOption: "ONCE_PER_EVENT",
@@ -201,7 +208,7 @@ version.tag = [
       {
         type: "TEMPLATE",
         key: "html",
-        value: "<script>var e='{{Event}}';var m={generate_lead:'Lead',sign_up:'CompleteRegistration',begin_checkout:'InitiateCheckout'}[e];if(m&&window.fbq){fbq('track',m,{content_name:'EscalaMED'});}</script>",
+        value: `<script>var e='{{Event}}';var m={generate_lead:'Lead',sign_up:'CompleteRegistration',begin_checkout:'InitiateCheckout'}[e];if(m&&window.fbq){var em='{{DLV | user_data.email_address}}';var ph='{{DLV | user_data.phone_number}}';if(em||ph){var ud={};if(em)ud.em=em;if(ph)ud.ph=ph;fbq('init','${metaPixelId}',ud);}fbq('track',m,{content_name:'EscalaMED'});}</script>`,
       },
       { type: "BOOLEAN", key: "supportDocumentWrite", value: "false" },
     ],
