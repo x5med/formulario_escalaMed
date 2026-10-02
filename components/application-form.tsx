@@ -113,6 +113,24 @@ function storeDraft(id: string, data: ApplicationData) {
   }
 }
 
+function clearRegistrationDraft() {
+  try {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+  } catch {
+    // A próxima inscrição ainda recebe um novo identificador em memória.
+  }
+}
+
+function clearClientCookies() {
+  const sharedDomain = location.hostname === "x5med.com.br" || location.hostname.endsWith(".x5med.com.br");
+  document.cookie.split(";").forEach((entry) => {
+    const name = entry.split("=", 1)[0]?.trim();
+    if (!name) return;
+    document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax`;
+    if (sharedDomain) document.cookie = `${name}=; Path=/; Domain=.x5med.com.br; Max-Age=0; SameSite=Lax`;
+  });
+}
+
 function requestPayload(data: ApplicationData, id: string, completed: boolean) {
   const attribution = readAttribution();
   const { whatsappConsent, ...answers } = data;
@@ -262,6 +280,11 @@ export function ApplicationForm() {
       user_data: trackingUserData,
     });
 
+    clearRegistrationDraft();
+    leadIdRef.current = "";
+    pendingSaveRef.current = null;
+    lastSavedRef.current = "";
+
     if (complimentary) {
       pushTrackingEvent("sign_up", {
         method: "cupom_convite",
@@ -270,6 +293,7 @@ export function ApplicationForm() {
         coupon: normalizedCoupon,
         user_data: trackingUserData,
       });
+      window.setTimeout(clearClientCookies, 0);
       setCompleted(true);
       return;
     }
@@ -289,7 +313,27 @@ export function ApplicationForm() {
         coupon: normalizedCoupon || undefined,
         items: [PRODUCT_ITEM],
       },
-    }, checkoutUrl);
+    }, checkoutUrl, clearClientCookies);
+  }, []);
+
+  const startAnotherRegistration = useCallback(() => {
+    const next = { ...initialData };
+    clearRegistrationDraft();
+    clearClientCookies();
+    leadIdRef.current = crypto.randomUUID();
+    latestDataRef.current = next;
+    activeSaveRef.current = null;
+    pendingSaveRef.current = null;
+    lastSavedRef.current = "";
+    submittingRef.current = false;
+    formStartedRef.current = false;
+    couponTrackedRef.current = "";
+    setData(next);
+    setErrors({});
+    setRequestError("");
+    setLoading(false);
+    setCompleted(false);
+    setPaymentUrl("");
   }, []);
 
   useEffect(() => {
@@ -443,7 +487,9 @@ export function ApplicationForm() {
         <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[#60778A]">
           {paymentUrl ? "Sua inscrição foi registrada. Conclua o pagamento de R$ 2.497,00 para garantir o acesso." : "Seu cupom foi aplicado. A equipe X5Med vai analisar suas respostas e entrar em contato sobre os próximos passos."}
         </p>
-        {paymentUrl && <a href={paymentUrl} className="mt-7 inline-flex h-12 items-center gap-2 rounded-xl bg-[#002647] px-6 font-semibold text-white">Ir para pagamento <ArrowRight className="size-4" /></a>}
+        {paymentUrl
+          ? <a href={paymentUrl} className="mt-7 inline-flex h-12 items-center gap-2 rounded-xl bg-[#002647] px-6 font-semibold text-white">Ir para pagamento <ArrowRight className="size-4" /></a>
+          : <Button type="button" onClick={startAnotherRegistration} className="mt-7 h-12 rounded-xl bg-[#002647] px-6 text-white hover:bg-[#06395F]">Cadastrar outra pessoa</Button>}
       </div>
     );
   }

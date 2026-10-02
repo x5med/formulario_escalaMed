@@ -6,6 +6,8 @@ O formulário envia todas as respostas em uma única submissão ao funil de imer
 
 Cada resposta também é salva em segundo plano como um lead em `Iniciou formulário` após sair do campo ou parar de digitar. Um identificador persistido no navegador permite atualizar o mesmo registro quando a pessoa voltar; ao concluir, o lead passa para `Candidatura`.
 
+Depois que a inscrição é concluída, o rascunho, o identificador persistido e os cookies acessíveis pelo navegador são removidos. Na confirmação gratuita, a ação `Cadastrar outra pessoa` inicia um formulário vazio com um novo identificador, permitindo vários cadastros no mesmo dispositivo.
+
 - `ESCALAMED_FORM_INGEST_KEY` — segredo compartilhado com o Metrics; obrigatório no runtime e somente no servidor.
 - `METRICS_FORM_INGEST_URL` — opcional; por padrão usa `https://metrics.x5med.com.br/api/endomax/integrations/escalamed-application`.
 - Inscrições sem cupom seguem para o checkout Eduzz: `https://chk.eduzz.com/1W3223YQ92`.

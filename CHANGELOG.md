@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-02 — Novo cadastro após a conclusão
+
+- Após a confirmação da inscrição, o formulário remove o rascunho, o identificador persistido e os cookies acessíveis pelo navegador.
+- A tela de sucesso da inscrição gratuita oferece a ação `Cadastrar outra pessoa`, que abre um formulário vazio com um novo identificador de lead.
+
 ## 2026-09-29 — Contato para continuidade da inscrição
 
 - O texto opcional do WhatsApp agora informa que a equipe X5 Med entrará em contato para dar continuidade à inscrição no evento.

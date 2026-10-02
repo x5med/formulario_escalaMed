@@ -84,6 +84,7 @@ export function trackAndNavigate(
   event: string,
   payload: Record<string, unknown>,
   destination: string,
+  beforeNavigate?: () => void,
 ) {
   const currentWindow = window as DataLayerWindow;
   currentWindow.dataLayer ||= [];
@@ -91,6 +92,7 @@ export function trackAndNavigate(
   const navigate = () => {
     if (navigated) return;
     navigated = true;
+    beforeNavigate?.();
     window.location.assign(destination);
   };
   currentWindow.dataLayer.push({
