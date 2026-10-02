@@ -583,6 +583,69 @@
             ]
           }
         }
+      },
+      {
+        "accountId": "6379820176",
+        "containerId": "265696899",
+        "tagId": "9",
+        "name": "Tag do Google AW-18388336415",
+        "type": "googtag",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "tagId",
+            "value": "AW-18388336415"
+          }
+        ],
+        "firingTriggerId": [
+          "2147479573"
+        ],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NOT_SET"
+        }
+      },
+      {
+        "accountId": "6379820176",
+        "containerId": "265696899",
+        "tagId": "10",
+        "name": "Inscrição",
+        "type": "awct",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "conversionId",
+            "value": "18388336415"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "conversionLabel",
+            "value": "IpNLCIzqh4wdEJ_-nsBE"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "conversionValue",
+            "value": "{{DLV | value}}"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "currencyCode",
+            "value": "{{DLV | currency}}"
+          }
+        ],
+        "firingTriggerId": [
+          "6"
+        ],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NOT_SET"
+        }
       }
     ],
     "builtInVariable": [
@@ -1239,6 +1302,30 @@
                 "type": "TEMPLATE",
                 "key": "arg1",
                 "value": "^(cta_click|diagnosis_select|scroll_depth|section_view|map_click|video_start|form_start|form_error|coupon_applied|generate_lead|sign_up|begin_checkout)$"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "accountId": "6379820176",
+        "containerId": "265696899",
+        "triggerId": "6",
+        "name": "CE | Google Ads | generate_lead",
+        "type": "CUSTOM_EVENT",
+        "customEventFilter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "generate_lead"
               }
             ]
           }

@@ -24,6 +24,10 @@ const eventNames = [
   "begin_checkout",
 ];
 
+const googleAdsConversionId = "18388336415";
+const googleAdsLeadLabel = "IpNLCIzqh4wdEJ_-nsBE";
+const metaPixelId = "1436597411907868";
+
 const dataLayerVariables = [
   "cta_position",
   "cta_label",
@@ -73,8 +77,19 @@ const eventParameter = (name) => ({
   ],
 });
 
+const adConsentSettings = {
+  consentStatus: "NEEDED",
+  consentType: {
+    type: "LIST",
+    list: [
+      { type: "TEMPLATE", value: "ad_storage" },
+      { type: "TEMPLATE", value: "ad_user_data" },
+    ],
+  },
+};
+
 version.name = "Tracking completo EscalaMED";
-version.description = "Eventos GA4 do funil EscalaMED, ecommerce begin_checkout e Conversion Linker. user_data não é enviado ao GA4.";
+version.description = "Funil EscalaMED em GA4, Google Ads e Meta. Purchase é enviado pelo webhook assinado da Eduzz para GA4 Measurement Protocol e Meta Conversions API.";
 delete version.path;
 delete version.containerVersionId;
 delete version.fingerprint;
@@ -98,10 +113,36 @@ version.trigger = [
       },
     ],
   },
+  {
+    accountId: version.accountId,
+    containerId: version.containerId,
+    triggerId: "6",
+    name: "CE | Google Ads | generate_lead",
+    type: "CUSTOM_EVENT",
+    customEventFilter: [
+      {
+        type: "EQUALS",
+        parameter: [
+          { type: "TEMPLATE", key: "arg0", value: "{{_event}}" },
+          { type: "TEMPLATE", key: "arg1", value: "generate_lead" },
+        ],
+      },
+    ],
+  },
 ];
 
 version.tag = [
-  ...(version.tag || []),
+  ...(version.tag || []).filter(
+    (tag) =>
+      ![
+        "Google Ads | Conversion Linker | Todas as páginas",
+        "GA4 | EscalaMED | Eventos do funil",
+        "Meta | EscalaMED | Base + PageView",
+        "Meta | EscalaMED | Eventos do funil",
+        "Tag do Google AW-18388336415",
+        "Inscrição",
+      ].includes(tag.name),
+  ),
   {
     accountId: version.accountId,
     containerId: version.containerId,
@@ -127,6 +168,75 @@ version.tag = [
       { type: "LIST", key: "eventParameters", list: dataLayerVariables.map(eventParameter) },
     ],
     firingTriggerId: ["5"],
+    tagFiringOption: "ONCE_PER_EVENT",
+    monitoringMetadata: { type: "MAP" },
+    consentSettings: { consentStatus: "NOT_SET" },
+  },
+  {
+    accountId: version.accountId,
+    containerId: version.containerId,
+    tagId: "7",
+    name: "Meta | EscalaMED | Base + PageView",
+    type: "html",
+    parameter: [
+      {
+        type: "TEMPLATE",
+        key: "html",
+        value: `<script>\n!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');\nfbq('init','${metaPixelId}');\nfbq('track','PageView');\n</script>\n<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${metaPixelId}&ev=PageView&noscript=1" /></noscript>`,
+      },
+      { type: "BOOLEAN", key: "supportDocumentWrite", value: "false" },
+    ],
+    firingTriggerId: ["2147479553"],
+    tagFiringOption: "ONCE_PER_EVENT",
+    monitoringMetadata: { type: "MAP" },
+    consentSettings: adConsentSettings,
+  },
+  {
+    accountId: version.accountId,
+    containerId: version.containerId,
+    tagId: "8",
+    name: "Meta | EscalaMED | Eventos do funil",
+    type: "html",
+    parameter: [
+      {
+        type: "TEMPLATE",
+        key: "html",
+        value: "<script>var e='{{Event}}';var m={generate_lead:'Lead',sign_up:'CompleteRegistration',begin_checkout:'InitiateCheckout'}[e];if(m&&window.fbq){fbq('track',m,{content_name:'EscalaMED'});}</script>",
+      },
+      { type: "BOOLEAN", key: "supportDocumentWrite", value: "false" },
+    ],
+    firingTriggerId: ["5"],
+    tagFiringOption: "ONCE_PER_EVENT",
+    monitoringMetadata: { type: "MAP" },
+    consentSettings: adConsentSettings,
+  },
+  {
+    accountId: version.accountId,
+    containerId: version.containerId,
+    tagId: "9",
+    name: `Tag do Google AW-${googleAdsConversionId}`,
+    type: "googtag",
+    parameter: [
+      { type: "TEMPLATE", key: "tagId", value: `AW-${googleAdsConversionId}` },
+    ],
+    firingTriggerId: ["2147479573"],
+    tagFiringOption: "ONCE_PER_EVENT",
+    monitoringMetadata: { type: "MAP" },
+    consentSettings: { consentStatus: "NOT_SET" },
+  },
+  {
+    accountId: version.accountId,
+    containerId: version.containerId,
+    tagId: "10",
+    name: "Inscrição",
+    type: "awct",
+    parameter: [
+      { type: "TEMPLATE", key: "conversionId", value: googleAdsConversionId },
+      { type: "TEMPLATE", key: "conversionLabel", value: googleAdsLeadLabel },
+      { type: "TEMPLATE", key: "conversionValue", value: "{{DLV | value}}" },
+      { type: "TEMPLATE", key: "currencyCode", value: "{{DLV | currency}}" },
+    ],
+    firingTriggerId: ["6"],
     tagFiringOption: "ONCE_PER_EVENT",
     monitoringMetadata: { type: "MAP" },
     consentSettings: { consentStatus: "NOT_SET" },
