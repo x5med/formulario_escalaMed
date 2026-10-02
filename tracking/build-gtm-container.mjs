@@ -11,21 +11,26 @@ const version = source.containerVersion;
 
 const eventNames = [
   "lp_view",
+  "sales_page_view",
   "cta_click",
+  "lead_gate_open",
   "diagnosis_select",
   "scroll_depth",
   "section_view",
   "map_click",
   "video_start",
   "form_start",
+  "form_started",
   "form_error",
   "coupon_applied",
   "generate_lead",
+  "lead_submitted",
   "sign_up",
   "begin_checkout",
   "form_submit",
   "offer_unlocked",
   "checkout_redirect",
+  "checkout_click",
 ];
 
 const googleAdsConversionId = "18388336415";
