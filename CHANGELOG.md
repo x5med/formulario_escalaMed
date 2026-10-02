@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-02 — GTM compartilhado nas landing pages
+
+- O gerador do contêiner `GTM-M4GT66JQ` passa a atender as LPs de EscalaMED, Secretária, Precificação, Bioma e Imersão.
+- O GA4 usa a propriedade global da X5 Med, enquanto o Pixel da Meta é escolhido por domínio e página de obrigado.
+- A conversão do Google Ads continua limitada ao lead enviado em `formulario-escalamed.x5med.com.br`.
+
 ## 2026-10-02 — Novo cadastro após a conclusão
 
 - Após a confirmação da inscrição, o formulário remove o rascunho, o identificador persistido e os cookies acessíveis pelo navegador.
