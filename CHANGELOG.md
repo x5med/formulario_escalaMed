@@ -5,6 +5,7 @@
 - Após a confirmação da inscrição, o formulário remove o rascunho, o identificador persistido e os cookies acessíveis pelo navegador.
 - A tela de sucesso da inscrição gratuita oferece a ação `Cadastrar outra pessoa`, que abre um formulário vazio com um novo identificador de lead.
 - O campo de nome remove números durante a digitação, e a API rejeita tentativas de envio com números no nome.
+- O cupom `Jimi` libera a inscrição gratuita e aceita variações de maiúsculas, minúsculas, acentos e espaços.
 
 ## 2026-09-29 — Contato para continuidade da inscrição
 
