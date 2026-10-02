@@ -15,6 +15,7 @@ function text(value: unknown, max = 500) {
 const roles = new Set(["doctor", "owner-manager", "other"]);
 const revenueRanges = new Set(["under-40k", "40k-70k", "70k-100k", "over-100k"]);
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const numberPattern = /\p{N}/u;
 
 function metricsPayload(id: string, payload: Payload, status: "started" | "completed", couponCode: string | null): MetricsLeadPayload {
   return {
@@ -79,6 +80,9 @@ export async function POST(request: Request) {
   if (text(payload.companyWebsite, 100)) return NextResponse.json({ id, access: "free" });
 
   const lead = metricsPayload(id, payload, "completed", couponCode);
+  if (numberPattern.test(lead.name)) {
+    return NextResponse.json({ error: "O nome não pode conter números.", field: "name" }, { status: 400 });
+  }
   const validIdentity = lead.name.length >= 3 && /^\S+@\S+\.\S+$/.test(lead.email)
     && lead.phone.replace(/\D/g, "").length >= 10
     && /^[A-Za-z0-9._]{1,30}$/.test(lead.instagram);
@@ -113,6 +117,9 @@ export async function PATCH(request: Request) {
   if (text(payload.companyWebsite, 100)) return NextResponse.json({ id });
 
   const lead = metricsPayload(id, payload, "started", text(payload.couponCode, 80) || null);
+  if (numberPattern.test(lead.name)) {
+    return NextResponse.json({ error: "O nome não pode conter números.", field: "name" }, { status: 400 });
+  }
   const hasAnswer = [lead.name, lead.email, lead.phone, lead.instagram, lead.role,
     lead.otherRole, lead.revenueRange, lead.couponCode].some(Boolean);
   if (!hasAnswer) return NextResponse.json({ error: "Nenhuma resposta informada." }, { status: 400 });

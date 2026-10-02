@@ -54,6 +54,7 @@ type StoredDraft = { id: string; data: ApplicationData; updatedAt: number };
 const DRAFT_STORAGE_KEY = "escalamed-registration-draft-v1";
 const DRAFT_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const numberPattern = /\p{N}/u;
 
 const roleTrackingLabels: Record<string, string> = {
   doctor: "Médico",
@@ -164,6 +165,7 @@ function formatPhone(value: string) {
 function validate(data: ApplicationData) {
   const errors: Record<string, string> = {};
   if (data.name.trim().length < 3) errors.name = "Digite seu nome completo.";
+  else if (numberPattern.test(data.name)) errors.name = "O nome não pode conter números.";
   if (!/^\S+@\S+\.\S+$/.test(data.email.trim())) errors.email = "Digite um e-mail válido.";
   if (data.phone.replace(/\D/g, "").length < 10) errors.phone = "Digite um WhatsApp com DDD.";
   if (!/^@?[A-Za-z0-9._]{1,30}$/.test(data.instagram.trim())) errors.instagram = "Informe um @ de Instagram válido.";
@@ -375,7 +377,7 @@ export function ApplicationForm() {
       inputSchema: {
         type: "object",
         properties: {
-          name: { type: "string", minLength: 3, description: "Nome completo" },
+          name: { type: "string", minLength: 3, pattern: "^[^0-9]*$", description: "Nome completo sem números" },
           email: { type: "string", format: "email" },
           phone: { type: "string", minLength: 10, description: "WhatsApp com DDD" },
           instagram: { type: "string", minLength: 1, description: "@ do Instagram" },
@@ -518,7 +520,7 @@ export function ApplicationForm() {
         <input tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px]" value={data.companyWebsite} onChange={(event) => update("companyWebsite", event.target.value)} />
 
         <div className="grid gap-x-4 gap-y-4 xl:grid-cols-2">
-          <div><Label htmlFor="name" className="mb-2 text-[#173D5D]">Nome completo *</Label><Input id="name" autoComplete="name" required className="form-field" placeholder="Seu nome completo" value={data.name} onChange={(event) => update("name", event.target.value)} aria-invalid={!!errors.name} /><FieldError>{errors.name}</FieldError></div>
+          <div><Label htmlFor="name" className="mb-2 text-[#173D5D]">Nome completo *</Label><Input id="name" autoComplete="name" required className="form-field" placeholder="Seu nome completo" value={data.name} onChange={(event) => update("name", event.target.value.replace(/\p{N}/gu, ""))} aria-invalid={!!errors.name} /><FieldError>{errors.name}</FieldError></div>
           <div><Label htmlFor="email" className="mb-2 text-[#173D5D]">E-mail *</Label><Input id="email" type="email" autoComplete="email" required className="form-field" placeholder="voce@exemplo.com" value={data.email} onChange={(event) => update("email", event.target.value)} aria-invalid={!!errors.email} /><FieldError>{errors.email}</FieldError></div>
           <div><Label htmlFor="phone" className="mb-2 text-[#173D5D]">WhatsApp *</Label><Input id="phone" type="tel" inputMode="tel" autoComplete="tel" required className="form-field" placeholder="(11) 99999-9999" value={data.phone} onChange={(event) => update("phone", formatPhone(event.target.value))} aria-invalid={!!errors.phone} /><FieldError>{errors.phone}</FieldError></div>
           <div><Label htmlFor="instagram" className="mb-2 text-[#173D5D]">Qual o @ do Instagram? *</Label><Input id="instagram" autoCapitalize="none" autoComplete="off" spellCheck={false} required className="form-field" placeholder="@seuperfil" value={data.instagram} onChange={(event) => update("instagram", event.target.value)} aria-invalid={!!errors.instagram} /><FieldError>{errors.instagram}</FieldError></div>
