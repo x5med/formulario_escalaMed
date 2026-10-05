@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-05 — Novo cupom Felipe
+
+- O cupom `Felipe` libera a inscrição gratuita e aceita variações de maiúsculas, minúsculas, acentos e espaços.
+
 ## 2026-10-02 — GTM compartilhado nas landing pages
 
 - O gerador do contêiner `GTM-M4GT66JQ` passa a atender as LPs de EscalaMED, Secretária, Precificação, Bioma e Imersão.
