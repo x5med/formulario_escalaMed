@@ -8,6 +8,7 @@ const coupons = new Map([
   ["escalamed", "EscalaMed"],
   ["jimi", "Jimi"],
   ["felipe", "Felipe"],
+  ["cs", "CS"],
 ]);
 
 export function normalizeCoupon(value: string): string | null {

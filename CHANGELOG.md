@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-07 — Novo cupom CS
+
+- O cupom `CS` libera a inscrição gratuita e aceita variações de maiúsculas, minúsculas e espaços.
+
 ## 2026-10-05 — Novo cupom Felipe
 
 - O cupom `Felipe` libera a inscrição gratuita e aceita variações de maiúsculas, minúsculas, acentos e espaços.
