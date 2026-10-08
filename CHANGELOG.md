@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-08 — Novo cupom Bioma100
+
+- O cupom `Bioma100` libera a inscrição gratuita e aceita variações de maiúsculas, minúsculas e espaços.
+
 ## 2026-10-07 — Novo cupom CS
 
 - O cupom `CS` libera a inscrição gratuita e aceita variações de maiúsculas, minúsculas e espaços.
