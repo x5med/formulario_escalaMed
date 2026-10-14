@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
 import { normalizeCoupon } from "@/lib/coupons";
-import { syncLeadToMetrics, type MetricsLeadPayload } from "@/lib/metrics";
+import { MetricsSyncError, syncLeadToMetrics, type MetricsLeadPayload } from "@/lib/metrics";
 
 export const runtime = "nodejs";
 
@@ -99,6 +99,7 @@ export async function POST(request: Request) {
     await syncLeadToMetrics(lead);
   } catch (error) {
     console.error("[leads POST] Metrics sync failed", error instanceof Error ? error.message : error);
+    if (error instanceof MetricsSyncError && error.needsReview) return NextResponse.json({ error: error.message, code: 'registration_review' }, { status: 409 });
     return NextResponse.json({ error: "Não foi possível registrar sua inscrição. Tente novamente." }, { status: 502 });
   }
 
@@ -128,6 +129,7 @@ export async function PATCH(request: Request) {
     await syncLeadToMetrics(lead);
   } catch (error) {
     console.error("[leads PATCH] Metrics sync failed", error instanceof Error ? error.message : error);
+    if (error instanceof MetricsSyncError && error.needsReview) return NextResponse.json({ error: error.message, code: 'registration_review' }, { status: 409 });
     return NextResponse.json({ error: "Não foi possível salvar o rascunho." }, { status: 502 });
   }
   return NextResponse.json({ id });

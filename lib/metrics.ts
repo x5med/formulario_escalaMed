@@ -39,6 +39,26 @@ export type MetricsLeadPayload = {
   referrer?: string | null;
 };
 
+export class MetricsSyncError extends Error {
+  constructor(public readonly needsReview: boolean) {
+    super(needsReview
+      ? 'Não foi possível confirmar sua inscrição. Seus dados precisam de conferência pela equipe X5 MED. Não houve confirmação das respostas deste envio.'
+      : 'Não foi possível registrar sua inscrição. Tente novamente.');
+    this.name = 'MetricsSyncError';
+  }
+}
+
+type MetricsSyncResult = {
+  ok: true;
+  leadId: string | null;
+  funnelId: string;
+  stage: string | null;
+  ignored?: boolean;
+  profileOnly?: boolean;
+  reason?: string;
+};
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export async function syncLeadToMetrics(payload: MetricsLeadPayload) {
   const key = process.env.ESCALAMED_FORM_INGEST_KEY || "";
   const endpoint = process.env.METRICS_FORM_INGEST_URL || DEFAULT_METRICS_URL;
@@ -57,10 +77,16 @@ export async function syncLeadToMetrics(payload: MetricsLeadPayload) {
       cache: "no-store",
       signal: controller.signal,
     });
-    if (!response.ok) {
-      throw new Error(`Metrics recusou a sincronização (${response.status}).`);
-    }
-    return await response.json() as { ok: true; leadId: string; funnelId: string; stage: string };
+    const result = await response.json().catch(() => null) as MetricsSyncResult | null;
+    if (!response.ok) throw new MetricsSyncError(response.status === 409);
+    // Check the semantic acknowledgement too: older Metrics versions return
+    // HTTP 200 for ignored/review results. Never present them as success.
+    const review = ['identity_review', 'review', 'provisional_review', 'deleted'].includes(result?.reason || '');
+    if (review) throw new MetricsSyncError(true);
+    if (result?.ok !== true || result.funnelId !== '37d22918-499b-4835-8e75-ed30270a555e'
+      || (result.leadId !== null && !UUID_PATTERN.test(result.leadId || ''))
+      || (payload.status === 'completed' && !result.leadId)) throw new MetricsSyncError(false);
+    return result;
   } finally {
     clearTimeout(timeout);
   }

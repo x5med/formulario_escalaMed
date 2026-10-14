@@ -4,7 +4,9 @@
 
 O formulário envia todas as respostas em uma única submissão ao funil de imersão EscalaMED, incluindo a condição da inscrição, o cupom validado e o preço de R$ 2.497,00. Os cupons aceitos são Fabio, Patricio, Patricia, Vital, Tainara, Convite, EscalaMed, Jimi, Felipe, CS e Bioma100, sem diferenciar maiúsculas/minúsculas, acentos ou espaços. Ao reconhecer uma variação válida, o campo corrige o texto para o formato oficial; por exemplo, `Escala Med` passa a `EscalaMed`.
 
-Cada resposta também é salva em segundo plano como um lead em `Iniciou formulário` após sair do campo ou parar de digitar. Um identificador persistido no navegador permite atualizar o mesmo registro quando a pessoa voltar; ao concluir, o lead passa para `Candidatura`.
+Cada resposta também é salva em segundo plano como um lead em `Iniciou formulário` após sair do campo ou parar de digitar. Um identificador persistido no navegador permite atualizar o mesmo registro quando a pessoa voltar; a primeira conclusão aceita passa para `Qualificação`, sem retroceder etapas comerciais já avançadas.
+
+O formulário não mantém uma segunda cópia das respostas no servidor: o Metrics é a fonte persistente. Desde 14/10/2026, `syncLeadToMetrics` verifica o resultado semântico, além do HTTP: revisão/conflito de identidade, tombstone, falta de lead ou resposta inválida não geram agradecimento, checkout nem eventos de conclusão. Revisão retorna 409 com mensagem pública genérica, sem expor cadastros conflitantes ou respostas privadas. Os campos e o rascunho permanecem para correção/reenvio; não limpar o formulário nem conceder consentimento quando a integração recusa a conclusão. Testes em `tests/metrics-sync.test.mjs` cobrem HTTP 200 de versões antigas do Metrics e o novo 409.
 
 Depois que a inscrição é concluída, o rascunho, o identificador persistido e os cookies acessíveis pelo navegador são removidos. Na confirmação gratuita, a ação `Cadastrar outra pessoa` inicia um formulário vazio com um novo identificador, permitindo vários cadastros no mesmo dispositivo.
 
