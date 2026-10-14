@@ -96,17 +96,18 @@ export async function POST(request: Request) {
   const checkoutUrl = "https://chk.eduzz.com/1W3223YQ92";
 
   try {
-    await syncLeadToMetrics(lead);
+    const reception = await syncLeadToMetrics(lead);
+    return NextResponse.json(
+      couponCode ? { id, access: 'free', receiptId: reception.submissionId, processing: reception.processing }
+        : { id, access: 'paid', checkoutUrl, receiptId: reception.submissionId, processing: reception.processing },
+      { status: 201 },
+    );
   } catch (error) {
     console.error("[leads POST] Metrics sync failed", error instanceof Error ? error.message : error);
     if (error instanceof MetricsSyncError && error.needsReview) return NextResponse.json({ error: error.message, code: 'registration_review' }, { status: 409 });
     return NextResponse.json({ error: "Não foi possível registrar sua inscrição. Tente novamente." }, { status: 502 });
   }
 
-  return NextResponse.json(
-    couponCode ? { id, access: "free" } : { id, access: "paid", checkoutUrl },
-    { status: 201 },
-  );
 }
 
 export async function PATCH(request: Request) {

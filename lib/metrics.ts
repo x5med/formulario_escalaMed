@@ -56,6 +56,9 @@ type MetricsSyncResult = {
   ignored?: boolean;
   profileOnly?: boolean;
   reason?: string;
+  received?: boolean;
+  submissionId?: string;
+  processing?: 'applied' | 'review' | 'pending' | 'deleted';
 };
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -81,6 +84,11 @@ export async function syncLeadToMetrics(payload: MetricsLeadPayload) {
     if (!response.ok) throw new MetricsSyncError(response.status === 409);
     // Check the semantic acknowledgement too: older Metrics versions return
     // HTTP 200 for ignored/review results. Never present them as success.
+    const durable = payload.status === 'completed' && result?.ok === true && result.received === true
+      && UUID_PATTERN.test(result.submissionId || '')
+      && result.funnelId === '37d22918-499b-4835-8e75-ed30270a555e'
+      && ['applied','review','pending','deleted'].includes(result.processing || '');
+    if (durable) return result;
     const review = ['identity_review', 'review', 'provisional_review', 'deleted'].includes(result?.reason || '');
     if (review) throw new MetricsSyncError(true);
     if (result?.ok !== true || result.funnelId !== '37d22918-499b-4835-8e75-ed30270a555e'

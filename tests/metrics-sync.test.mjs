@@ -27,3 +27,12 @@ test('missing/malformed acknowledgements and infrastructure failures never mean 
  for(const data of [null,{},result({ok:false}),result({leadId:null}),result({leadId:'invalid'}),result({funnelId:'foreign'})]) {response(data);await assert.rejects(syncLeadToMetrics(payload),MetricsSyncError);}
  response({error:'private details'},503);await assert.rejects(syncLeadToMetrics(payload),error=>error instanceof MetricsSyncError&&!error.needsReview&&!error.message.includes('private'));
 });
+
+test('durable received acknowledgement accepts review without claiming a CRM card',async()=>{
+ for(const processing of ['review','pending','deleted']){
+  response(result({received:true,submissionId:id,processing,leadId:null,ignored:true}),202);
+  const received=await syncLeadToMetrics(payload);assert.equal(received.submissionId,id);assert.equal(received.leadId,null);
+ }
+ response(result({received:true,submissionId:'invalid',processing:'review',leadId:null,reason:'identity_review'}),202);
+ await assert.rejects(syncLeadToMetrics(payload),MetricsSyncError);
+});

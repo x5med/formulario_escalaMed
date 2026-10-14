@@ -48,7 +48,7 @@ type WebMcpContext = {
   ) => void | Promise<void>;
 };
 
-type SubmissionResult = { id: string; access: "free" | "paid"; checkoutUrl?: string };
+type SubmissionResult = { id: string; access: "free" | "paid"; checkoutUrl?: string; receiptId?: string; processing?: string };
 type StoredDraft = { id: string; data: ApplicationData; updatedAt: number };
 
 const DRAFT_STORAGE_KEY = "escalamed-registration-draft-v1";
@@ -200,6 +200,8 @@ export function ApplicationForm() {
   const [requestError, setRequestError] = useState("");
   const [loading, setLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [receiptId, setReceiptId] = useState('');
+  const [processing, setProcessing] = useState('');
   const [paymentUrl, setPaymentUrl] = useState("");
   const leadIdRef = useRef("");
   const latestDataRef = useRef<ApplicationData>(initialData);
@@ -266,6 +268,8 @@ export function ApplicationForm() {
   }, []);
 
   const finishSubmission = useCallback((candidate: ApplicationData, result: SubmissionResult) => {
+    setReceiptId(result.receiptId || '');
+    setProcessing(result.processing || '');
     const complimentary = result.access === "free";
     const trackingUserData = userData(candidate.email, candidate.phone);
     const normalizedCoupon = normalizeCoupon(candidate.couponCode) || "";
@@ -335,6 +339,8 @@ export function ApplicationForm() {
     setRequestError("");
     setLoading(false);
     setCompleted(false);
+    setReceiptId('');
+    setProcessing('');
     setPaymentUrl("");
   }, []);
 
@@ -489,6 +495,7 @@ export function ApplicationForm() {
         <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[#60778A]">
           {paymentUrl ? "Sua inscrição foi registrada. Conclua o pagamento de R$ 2.497,00 para garantir o acesso." : "Seu cupom foi aplicado. A equipe X5Med vai analisar suas respostas e entrar em contato sobre os próximos passos."}
         </p>
+        {receiptId && <p className="mx-auto mt-3 max-w-md break-all text-xs leading-5 text-[#60778A]">Protocolo: {receiptId}{processing && processing !== 'applied' ? ' · Respostas recebidas; cadastro em conferência pela equipe.' : ''}</p>}
         {paymentUrl
           ? <a href={paymentUrl} className="mt-7 inline-flex h-12 items-center gap-2 rounded-xl bg-[#002647] px-6 font-semibold text-white">Ir para pagamento <ArrowRight className="size-4" /></a>
           : <Button type="button" onClick={startAnotherRegistration} className="mt-7 h-12 rounded-xl bg-[#002647] px-6 text-white hover:bg-[#06395F]">Cadastrar outra pessoa</Button>}
