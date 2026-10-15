@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-15 — Contato obrigatório para concluir a inscrição
+
+- A autorização de contato pelo WhatsApp agora é obrigatória para dar continuidade à inscrição, com texto mais claro sobre seu uso operacional no evento.
+- O aceite passou a usar um toggle switch e o botão de inscrição permanece bloqueado até sua ativação.
+- A API e a ferramenta de envio também exigem a autorização ativa, evitando conclusões sem o contato necessário.
+
 ## 2026-10-08 — Novo cupom Bioma100
 
 - O cupom `Bioma100` libera a inscrição gratuita e aceita variações de maiúsculas, minúsculas e espaços.

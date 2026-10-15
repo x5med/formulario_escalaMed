@@ -1,1 +1,1 @@
-export const WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT = "Quero que a equipe X5 Med entre em contato comigo pelo WhatsApp para dar continuidade à minha inscrição neste evento. Posso cancelar a qualquer momento respondendo PARAR.";
+export const WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT = "Autorizo a equipe X5 Med a entrar em contato comigo pelo WhatsApp. Este contato é necessário para dar continuidade à minha inscrição e receber as orientações do evento. Posso cancelar a qualquer momento respondendo PARAR.";

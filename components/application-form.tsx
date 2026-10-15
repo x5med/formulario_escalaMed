@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Switch } from "@/components/ui/switch";
 import { WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
 import { formatCouponInput, normalizeCoupon } from "@/lib/coupons";
 import {
@@ -173,6 +174,7 @@ function validate(data: ApplicationData) {
   if (data.role === "other" && data.otherRole.trim().length < 2) errors.otherRole = "Informe seu cargo.";
   if (!["under-40k", "40k-70k", "70k-100k", "over-100k"].includes(data.revenueRange)) errors.revenueRange = "Selecione uma faixa de faturamento.";
   if (data.couponCode.trim() && !normalizeCoupon(data.couponCode)) errors.couponCode = "Cupom não reconhecido. Confira o código ou remova-o para continuar com a inscrição paga.";
+  if (!data.whatsappConsent) errors.whatsappConsent = "Ative a autorização de contato para continuar com a inscrição.";
   return errors;
 }
 
@@ -391,9 +393,9 @@ export function ApplicationForm() {
           otherRole: { type: "string", description: "Obrigatório para o cargo Outros" },
           revenueRange: { type: "string", enum: ["under-40k", "40k-70k", "70k-100k", "over-100k"] },
           couponCode: { type: "string", description: "Cupom opcional para acesso gratuito" },
-          whatsappConsent: { type: "boolean", description: "Aceite opcional para contato sobre a inscrição pelo WhatsApp" },
+          whatsappConsent: { type: "boolean", const: true, description: "Autorização obrigatória para o contato de continuidade da inscrição pelo WhatsApp" },
         },
-        required: ["name", "email", "phone", "instagram", "role", "revenueRange"],
+        required: ["name", "email", "phone", "instagram", "role", "revenueRange", "whatsappConsent"],
         additionalProperties: false,
       },
       annotations: { readOnlyHint: false, untrustedContentHint: false },
@@ -546,12 +548,30 @@ export function ApplicationForm() {
             });
             if (!validCoupon) trackValidationError("couponCode", "Cupom não reconhecido.");
           }} aria-invalid={!!errors.couponCode || !!(data.couponCode.trim() && !coupon)} /><FieldError>{errors.couponCode}</FieldError>{coupon ? <p className="mt-1.5 text-xs font-semibold text-[#1F7558]">Cupom aplicado: sua inscrição será gratuita.</p> : data.couponCode.trim() && !errors.couponCode ? <p className="mt-1.5 text-xs font-medium text-[#B33D3D]">Cupom não reconhecido. Confira o código ou remova-o para continuar com a inscrição paga.</p> : null}</div>
-          <div className="xl:col-span-2 flex items-start gap-3 rounded-xl border border-[#DCE5EC] bg-[#F7FAFD] p-3.5 text-xs leading-5 text-[#526C80]"><input id="whatsapp-consent" type="checkbox" className="mt-1 size-4 shrink-0 accent-[#002647]" checked={data.whatsappConsent} onChange={(event) => update("whatsappConsent", event.target.checked)} /><div><label htmlFor="whatsapp-consent" className="cursor-pointer">{WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT}</label><a className="mt-1 block font-semibold text-[#002647] underline" href="https://metrics.x5med.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Política de Privacidade ↗</a></div></div>
+          <div className="xl:col-span-2">
+            <div className={`flex items-start gap-3 rounded-xl border p-3.5 text-xs leading-5 transition-colors ${data.whatsappConsent ? "border-[#B9DED4] bg-[#F1FAF7] text-[#456A61]" : "border-[#E7D2AE] bg-[#FBF6ED] text-[#526C80]"}`}>
+              <Switch
+                id="whatsappConsent"
+                checked={data.whatsappConsent}
+                onCheckedChange={(checked) => update("whatsappConsent", checked)}
+                aria-required="true"
+                aria-invalid={!!errors.whatsappConsent}
+                aria-describedby="whatsapp-consent-help"
+                className="mt-0.5 !h-7 !w-12 cursor-pointer data-[state=checked]:!bg-[#43CDB5] data-[state=unchecked]:!bg-[#C9D7DD] [&_[data-slot=switch-thumb]]:!size-6 [&_[data-slot=switch-thumb]]:shadow-[0_1px_4px_rgb(0_38_71/24%)]"
+              />
+              <div className="min-w-0">
+                <label htmlFor="whatsappConsent" className="cursor-pointer font-medium">{WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT}</label>
+                <p id="whatsapp-consent-help" className={`mt-1 font-semibold ${data.whatsappConsent ? "text-[#1F7558]" : "text-[#8A6335]"}`}>{data.whatsappConsent ? "Autorização ativada. Você já pode concluir sua inscrição." : "Ative esta opção para liberar o envio da inscrição."}</p>
+                <a className="mt-1 block font-semibold text-[#002647] underline" href="https://metrics.x5med.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Política de Privacidade ↗</a>
+              </div>
+            </div>
+            <FieldError>{errors.whatsappConsent}</FieldError>
+          </div>
         </div>
 
         {requestError && <p role="alert" className="mt-5 rounded-xl bg-[#FFF1F1] px-4 py-3 text-sm text-[#A63838]">{requestError}</p>}
 
-        <Button type="submit" className="mt-6 h-12 w-full rounded-xl bg-[#002647] px-6 text-white shadow-[0_10px_24px_rgb(0_38_71/18%)] hover:bg-[#06395F]" disabled={loading}>
+        <Button type="submit" className="mt-6 h-12 w-full rounded-xl bg-[#002647] px-6 text-white shadow-[0_10px_24px_rgb(0_38_71/18%)] hover:bg-[#06395F] disabled:cursor-not-allowed disabled:bg-[#8798A6]" disabled={loading || !data.whatsappConsent}>
           {loading ? <><Loader2 className="animate-spin" /> Registrando...</> : coupon ? <>Concluir inscrição gratuita <Check /></> : <>Continuar para pagamento <ArrowRight /></>}
         </Button>
         <p className="mt-3 text-center text-xs leading-5 text-[#6F8292]">{coupon ? "Nenhum pagamento será necessário com este cupom." : "Você será direcionado ao pagamento após enviar seus dados."}</p>

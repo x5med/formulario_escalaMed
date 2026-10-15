@@ -88,7 +88,7 @@ export async function POST(request: Request) {
     && /^[A-Za-z0-9._]{1,30}$/.test(lead.instagram);
   const validAnswers = roles.has(lead.role || "") && revenueRanges.has(lead.revenueRange || "")
     && (lead.role !== "other" || (lead.otherRole?.length || 0) >= 2);
-  if (!validIdentity || !validAnswers || typeof payload.whatsappConsent !== "boolean" || !/^https?:\/\//i.test(lead.pageUrl || "")) {
+  if (!validIdentity || !validAnswers || payload.whatsappConsent !== true || !/^https?:\/\//i.test(lead.pageUrl || "")) {
     return NextResponse.json({ error: "Revise todos os campos obrigatórios antes de concluir." }, { status: 400 });
   }
 
