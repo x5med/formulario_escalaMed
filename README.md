@@ -23,6 +23,10 @@ O GTM `GTM-M4GT66JQ` roda com Consent Mode v2 e a preferência é compartilhada 
 - `GA4_MEASUREMENT_ID` — ID do fluxo web (por exemplo, `G-...`).
 - `GA4_API_SECRET` — segredo do Measurement Protocol criado no fluxo do GA4.
 - `META_PIXEL_ID` e `META_CONVERSIONS_API_TOKEN` — opcionais para Meta CAPI pelo webhook.
+
+### Retorno comercial do CRM à Meta (15/10/2026)
+
+O formulário oferece um aceite **opcional**, separado do WhatsApp, para enviar identificadores mínimos com hash e etapas Qualificação/Confirmado à Meta pelo Metrics. Inicia desmarcado, não é restaurado do rascunho e não bloqueia a inscrição quando recusado. Somente a conclusão envia a decisão booleana; a API da LP fixa a versão `escalamed-meta-capi-2026-10-15-v1`, sem aceitar versão/ator/destino do navegador. O Metrics guarda a decisão no recibo durável privado e só aplica autorização à participação resolvida. Cadastros anteriores, cookies e opt-in WhatsApp não viram autorização CAPI. Revogação: suporte@x5med.com.br com o protocolo, conferida no Metrics. Essa operação não altera o Pixel/GTM existente nem o webhook de pagamentos; Confirmado não é compra. Testes: `node --test tests/*.test.mjs`.
 - `META_GRAPH_API_VERSION` — opcional; padrão `v24.0`.
 - `META_TEST_EVENT_CODE` — opcional e temporário para validar em Eventos de Teste.
 

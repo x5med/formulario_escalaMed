@@ -20,6 +20,8 @@ export type MetricsLeadPayload = {
   consent?: boolean;
   whatsappConsent?: boolean;
   consentText?: string;
+  metaAdsConsent?: boolean;
+  metaAdsConsentVersion?: string;
   pageUrl?: string;
   formSubmissionId?: string;
   couponCode?: string | null;

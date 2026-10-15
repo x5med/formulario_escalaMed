@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
+import { META_CAPI_CONSENT_VERSION, WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
 import { normalizeCoupon } from "@/lib/coupons";
 import { MetricsSyncError, syncLeadToMetrics, type MetricsLeadPayload } from "@/lib/metrics";
 
@@ -31,6 +31,7 @@ function metricsPayload(id: string, payload: Payload, status: "started" | "compl
       consent: payload.whatsappConsent === true,
       whatsappConsent: payload.whatsappConsent === true,
       consentText: WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT,
+      ...(typeof payload.metaAdsConsent === 'boolean' ? { metaAdsConsent: payload.metaAdsConsent, metaAdsConsentVersion: META_CAPI_CONSENT_VERSION } : {}),
       pageUrl: text(payload.pageUrl, 500),
       formSubmissionId: id,
       registrationType: couponCode ? "complimentary" as const : "payment_pending" as const,
@@ -65,6 +66,7 @@ async function readPayload(request: Request): Promise<Payload | null> {
 export async function POST(request: Request) {
   const payload = await readPayload(request);
   if (!payload) return NextResponse.json({ error: "Dados inválidos." }, { status: 400 });
+  if (payload.metaAdsConsent !== undefined && typeof payload.metaAdsConsent !== 'boolean') return NextResponse.json({ error: 'Escolha de compartilhamento inválida.' }, {status:400});
 
   const couponInput = text(payload.couponCode, 80);
   const couponCode = couponInput ? normalizeCoupon(couponInput) : null;

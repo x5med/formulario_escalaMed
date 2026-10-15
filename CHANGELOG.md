@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-15 — Escolha opcional de retorno comercial à Meta
+
+- Aceite opcional, separado do WhatsApp, para identificadores mínimos com hash e etapas comerciais via Metrics. Inicia desmarcado, não é restaurado do rascunho e recusar não bloqueia a inscrição.
+- Somente a conclusão transmite uma decisão booleana; a API fixa a versão do aviso no servidor e rejeita valores malformados. Não concede autorização pelo WebMCP, cookies ou opt-in WhatsApp.
+- Preservado o ajuste de ocultar a mensagem de confirmação do WhatsApp. Seis testes Node, lint dos arquivos alterados e build de produção aprovados; integração do recibo e envio são validados no Metrics.
+
 ## 2026-10-15 — Confirmação visual simplificada
 
 - Ao ativar a autorização de contato, o aviso auxiliar desaparece e permanecem apenas o texto do aceite e o link da Política de Privacidade.

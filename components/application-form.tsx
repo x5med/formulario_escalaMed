@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Switch } from "@/components/ui/switch";
-import { WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
+import { META_CAPI_CONSENT_TEXT, WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
 import { formatCouponInput, normalizeCoupon } from "@/lib/coupons";
 import {
   decorateUrl,
@@ -32,6 +32,7 @@ type ApplicationData = {
   revenueRange: string;
   couponCode: string;
   whatsappConsent: boolean;
+  metaAdsConsent: boolean;
   companyWebsite: string;
 };
 
@@ -80,6 +81,7 @@ const initialData: ApplicationData = {
   revenueRange: "",
   couponCode: "",
   whatsappConsent: false,
+  metaAdsConsent: false,
   companyWebsite: "",
 };
 
@@ -99,6 +101,7 @@ function readStoredDraft(): StoredDraft | null {
     for (const key of Object.keys(initialData) as (keyof ApplicationData)[]) {
       const value = saved.data[key];
       if (key === "whatsappConsent") data.whatsappConsent = value === true;
+      else if (key === 'metaAdsConsent') data.metaAdsConsent = false;
       else if (typeof value === "string") (data as unknown as Record<string, string>)[key] = value;
     }
     return { id: saved.id!, data, updatedAt: saved.updatedAt };
@@ -109,7 +112,7 @@ function readStoredDraft(): StoredDraft | null {
 
 function storeDraft(id: string, data: ApplicationData) {
   try {
-    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ id, data, updatedAt: Date.now() }));
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ id, data: {...data, metaAdsConsent:false}, updatedAt: Date.now() }));
   } catch {
     // O envio ao Metrics continua mesmo quando o armazenamento local está indisponível.
   }
@@ -135,7 +138,7 @@ function clearClientCookies() {
 
 function requestPayload(data: ApplicationData, id: string, completed: boolean) {
   const attribution = readAttribution();
-  const { whatsappConsent, ...answers } = data;
+  const { whatsappConsent, metaAdsConsent, ...answers } = data;
   return {
     ...answers,
     sourceLeadId: id,
@@ -151,7 +154,7 @@ function requestPayload(data: ApplicationData, id: string, completed: boolean) {
     gbraid: attribution.gbraid || "",
     referrer: document.referrer,
     pageUrl: window.location.href,
-    ...(completed ? { whatsappConsent } : {}),
+    ...(completed ? { whatsappConsent, metaAdsConsent } : {}),
   };
 }
 
@@ -566,6 +569,10 @@ export function ApplicationForm() {
               </div>
             </div>
             <FieldError>{errors.whatsappConsent}</FieldError>
+            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-[#D9E3EA] bg-[#F7FAFC] p-3.5 text-xs leading-5 text-[#526C80]">
+              <input type="checkbox" checked={data.metaAdsConsent} onChange={e=>update('metaAdsConsent',e.target.checked)} className="mt-1 size-4 shrink-0 accent-[#002647]" />
+              <span>{META_CAPI_CONSENT_TEXT} <a className="font-semibold text-[#002647] underline" href="https://metrics.x5med.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Saiba mais na Política de Privacidade ↗</a></span>
+            </label>
           </div>
         </div>
 

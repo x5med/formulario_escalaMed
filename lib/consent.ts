@@ -1,1 +1,3 @@
 export const WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT = "Autorizo a equipe X5 Med a entrar em contato comigo pelo WhatsApp. Este contato é necessário para dar continuidade à minha inscrição e receber as orientações do evento. Posso cancelar a qualquer momento respondendo PARAR.";
+export const META_CAPI_CONSENT_VERSION = 'escalamed-meta-capi-2026-10-15-v1';
+export const META_CAPI_CONSENT_TEXT = 'Opcional: autorizo a X5 Med a compartilhar com a Meta meu e-mail e telefone em formato de hash, a data e as etapas de qualificação e confirmação da minha inscrição, para medir e melhorar suas campanhas. Não serão enviadas minhas respostas, faturamento ou informações de saúde. Posso revogar pelo e-mail suporte@x5med.com.br. Recusar não impede minha inscrição.';
