@@ -56,7 +56,7 @@ export default function Home() {
 
             <div className="mt-4 flex items-center justify-center gap-2 text-center text-xs text-white/55 lg:text-[#486176]">
               <ShieldCheck className="size-4 shrink-0 text-[#C69858]" />
-              Seus dados são tratados com segurança e usados apenas pelo EscalaMED.
+              Seus dados são tratados conforme suas escolhas e nossa Política de Privacidade.
             </div>
           </div>
         </section>
