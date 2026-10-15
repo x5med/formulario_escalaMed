@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-15 — Confirmação visual simplificada
+
+- Ao ativar a autorização de contato, o aviso auxiliar desaparece e permanecem apenas o texto do aceite e o link da Política de Privacidade.
+
 ## 2026-10-15 — Contato obrigatório para concluir a inscrição
 
 - A autorização de contato pelo WhatsApp agora é obrigatória para dar continuidade à inscrição, com texto mais claro sobre seu uso operacional no evento.

@@ -556,12 +556,12 @@ export function ApplicationForm() {
                 onCheckedChange={(checked) => update("whatsappConsent", checked)}
                 aria-required="true"
                 aria-invalid={!!errors.whatsappConsent}
-                aria-describedby="whatsapp-consent-help"
+                aria-describedby={data.whatsappConsent ? undefined : "whatsapp-consent-help"}
                 className="mt-0.5 !h-7 !w-12 cursor-pointer data-[state=checked]:!bg-[#43CDB5] data-[state=unchecked]:!bg-[#C9D7DD] [&_[data-slot=switch-thumb]]:!size-6 [&_[data-slot=switch-thumb]]:shadow-[0_1px_4px_rgb(0_38_71/24%)]"
               />
               <div className="min-w-0">
                 <label htmlFor="whatsappConsent" className="cursor-pointer font-medium">{WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT}</label>
-                <p id="whatsapp-consent-help" className={`mt-1 font-semibold ${data.whatsappConsent ? "text-[#1F7558]" : "text-[#8A6335]"}`}>{data.whatsappConsent ? "Autorização ativada. Você já pode concluir sua inscrição." : "Ative esta opção para liberar o envio da inscrição."}</p>
+                {!data.whatsappConsent && <p id="whatsapp-consent-help" className="mt-1 font-semibold text-[#8A6335]">Ative esta opção para liberar o envio da inscrição.</p>}
                 <a className="mt-1 block font-semibold text-[#002647] underline" href="https://metrics.x5med.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Política de Privacidade ↗</a>
               </div>
             </div>
