@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-16 — Novo cupom SAUDE
+
+- SAUDE libera a inscrição gratuita, aceitando variações de maiúsculas, minúsculas, acentos e espaços, e segue identificado no envio ao Metrics.
+
 ## 2026-10-15 — Escolha opcional de retorno comercial à Meta
 
 - Aceite opcional, separado do WhatsApp, para identificadores mínimos com hash e etapas comerciais via Metrics. Inicia desmarcado, não é restaurado do rascunho e recusar não bloqueia a inscrição.
