@@ -10,6 +10,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Switch } from "@/components/ui/switch";
 import { META_CAPI_CONSENT_TEXT, WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
 import { formatCouponInput, normalizeCoupon } from "@/lib/coupons";
+import { APPLICATION_FIELDS, ApplicationValidationError, readApplicationErrors, validateApplication, VALIDATION_SUMMARY, type ApplicationField } from '@/lib/application-validation';
 import {
   decorateUrl,
   FORM_ID,
@@ -56,7 +57,6 @@ type StoredDraft = { id: string; data: ApplicationData; updatedAt: number };
 const DRAFT_STORAGE_KEY = "escalamed-registration-draft-v1";
 const DRAFT_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const numberPattern = /\p{N}/u;
 
 const roleTrackingLabels: Record<string, string> = {
   doctor: "Médico",
@@ -159,7 +159,10 @@ function requestPayload(data: ApplicationData, id: string, completed: boolean) {
 }
 
 function formatPhone(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (!/^[+\d() .\-]*$/.test(value)) return value;
+  let digits = value.replace(/\D/g, "");
+  if (digits.length > 11 && digits.startsWith('55')) digits = digits.slice(2);
+  if (digits.length > 11) return value;
   if (digits.length <= 2) return digits;
   if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
   if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
@@ -167,18 +170,7 @@ function formatPhone(value: string) {
 }
 
 function validate(data: ApplicationData) {
-  const errors: Record<string, string> = {};
-  if (data.name.trim().length < 3) errors.name = "Digite seu nome completo.";
-  else if (numberPattern.test(data.name)) errors.name = "O nome não pode conter números.";
-  if (!/^\S+@\S+\.\S+$/.test(data.email.trim())) errors.email = "Digite um e-mail válido.";
-  if (data.phone.replace(/\D/g, "").length < 10) errors.phone = "Digite um WhatsApp com DDD.";
-  if (!/^@?[A-Za-z0-9._]{1,30}$/.test(data.instagram.trim())) errors.instagram = "Informe um @ de Instagram válido.";
-  if (!["doctor", "owner-manager", "other"].includes(data.role)) errors.role = "Selecione seu cargo na clínica.";
-  if (data.role === "other" && data.otherRole.trim().length < 2) errors.otherRole = "Informe seu cargo.";
-  if (!["under-40k", "40k-70k", "70k-100k", "over-100k"].includes(data.revenueRange)) errors.revenueRange = "Selecione uma faixa de faturamento.";
-  if (data.couponCode.trim() && !normalizeCoupon(data.couponCode)) errors.couponCode = "Cupom não reconhecido. Confira o código ou remova-o para continuar com a inscrição paga.";
-  if (!data.whatsappConsent) errors.whatsappConsent = "Ative a autorização de contato para continuar com a inscrição.";
-  return errors;
+  return validateApplication(data);
 }
 
 async function submitApplication(data: ApplicationData, id: string): Promise<SubmissionResult> {
@@ -187,15 +179,19 @@ async function submitApplication(data: ApplicationData, id: string): Promise<Sub
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestPayload(data, id, true)),
   });
-  const result = await response.json() as SubmissionResult & { error?: string };
-  if (!response.ok) throw new Error(result.error || "Não foi possível registrar sua inscrição. Tente novamente.");
+  const result = await response.json() as SubmissionResult & { error?: string; errors?: unknown };
+  if (!response.ok) {
+    const fields = readApplicationErrors(result.errors);
+    if (Object.keys(fields).length) throw new ApplicationValidationError(fields);
+    throw new Error(result.error || 'O serviço de inscrições está indisponível no momento. Seus dados foram mantidos; tente novamente em instantes.');
+  }
   if (result.access === "paid" && !result.checkoutUrl) throw new Error("O link de pagamento não está disponível. Tente novamente.");
   return result;
 }
 
-function FieldError({ children }: { children?: string }) {
+function FieldError({ field, children }: { field: ApplicationField; children?: string }) {
   if (!children) return null;
-  return <p className="mt-1.5 text-xs font-medium text-[#B33D3D]">{children}</p>;
+  return <p id={`${field}-error`} aria-live="polite" className="mt-1.5 text-xs font-medium text-[#B33D3D]">{children}</p>;
 }
 
 export function ApplicationForm() {
@@ -419,8 +415,8 @@ export function ApplicationForm() {
         };
         const errors = validate(candidate);
         if (Object.keys(errors).length) {
-          const firstField = Object.keys(errors)[0];
-          trackValidationError(firstField, errors[firstField]);
+          const firstField = Object.keys(errors)[0] as ApplicationField;
+          trackValidationError(firstField, errors[firstField] || VALIDATION_SUMMARY);
           throw new Error(errors[firstField]);
         }
         submittingRef.current = true;
@@ -450,6 +446,7 @@ export function ApplicationForm() {
       : { ...current, [field]: value };
     latestDataRef.current = next;
     setData(next);
+    setRequestError('');
     if (draftReady) storeDraft(leadId(), next);
     setErrors((current) => {
       if (!current[field] && (field !== "role" || !current.otherRole)) return current;
@@ -468,7 +465,8 @@ export function ApplicationForm() {
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
       const firstField = Object.keys(nextErrors)[0];
-      trackValidationError(firstField, nextErrors[firstField]);
+      setRequestError(VALIDATION_SUMMARY);
+      trackValidationError(firstField, nextErrors[firstField as ApplicationField] || VALIDATION_SUMMARY);
       document.getElementById(firstField)?.focus();
       return;
     }
@@ -481,6 +479,10 @@ export function ApplicationForm() {
       finishSubmission(snapshot, result);
     } catch (error) {
       submittingRef.current = false;
+      if (error instanceof ApplicationValidationError) {
+        setErrors(error.fields);
+        document.getElementById(Object.keys(error.fields)[0])?.focus();
+      }
       const message = error instanceof Error ? error.message : "Não foi possível registrar sua inscrição. Tente novamente.";
       trackValidationError("submission", message, "server");
       setRequestError(message);
@@ -526,19 +528,26 @@ export function ApplicationForm() {
       <form
         onSubmit={handleSubmit}
         onFocusCapture={trackFormStart}
-        onBlur={() => { void savePartial(latestDataRef.current).catch(() => undefined); }}
+        onBlur={(event) => {
+          const field = event.target.id as ApplicationField;
+          if (APPLICATION_FIELDS.includes(field)) {
+            const message = validate(latestDataRef.current)[field];
+            setErrors(current => { const next = {...current}; if (message) next[field] = message; else delete next[field]; return next; });
+          }
+          void savePartial(latestDataRef.current).catch(() => undefined);
+        }}
         noValidate
       >
         <input tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px]" value={data.companyWebsite} onChange={(event) => update("companyWebsite", event.target.value)} />
 
         <div className="grid gap-x-4 gap-y-4 xl:grid-cols-2">
-          <div><Label htmlFor="name" className="mb-2 text-[#173D5D]">Nome completo *</Label><Input id="name" autoComplete="name" required className="form-field" placeholder="Seu nome completo" value={data.name} onChange={(event) => update("name", event.target.value.replace(/\p{N}/gu, ""))} aria-invalid={!!errors.name} /><FieldError>{errors.name}</FieldError></div>
-          <div><Label htmlFor="email" className="mb-2 text-[#173D5D]">E-mail *</Label><Input id="email" type="email" autoComplete="email" required className="form-field" placeholder="voce@exemplo.com" value={data.email} onChange={(event) => update("email", event.target.value)} aria-invalid={!!errors.email} /><FieldError>{errors.email}</FieldError></div>
-          <div><Label htmlFor="phone" className="mb-2 text-[#173D5D]">WhatsApp *</Label><Input id="phone" type="tel" inputMode="tel" autoComplete="tel" required className="form-field" placeholder="(11) 99999-9999" value={data.phone} onChange={(event) => update("phone", formatPhone(event.target.value))} aria-invalid={!!errors.phone} /><FieldError>{errors.phone}</FieldError></div>
-          <div><Label htmlFor="instagram" className="mb-2 text-[#173D5D]">Qual o @ do Instagram? *</Label><Input id="instagram" autoCapitalize="none" autoComplete="off" spellCheck={false} required className="form-field" placeholder="@seuperfil" value={data.instagram} onChange={(event) => update("instagram", event.target.value)} aria-invalid={!!errors.instagram} /><FieldError>{errors.instagram}</FieldError></div>
-          <div className="[&_[data-slot=native-select-wrapper]]:w-full"><Label htmlFor="role" className="mb-2 text-[#173D5D]">Qual seu cargo na clínica? *</Label><NativeSelect id="role" required className="form-field w-full" value={data.role} onChange={(event) => update("role", event.target.value)} aria-invalid={!!errors.role}><NativeSelectOption value="">Selecione seu cargo</NativeSelectOption><NativeSelectOption value="doctor">Médico</NativeSelectOption><NativeSelectOption value="owner-manager">Dono ou Gestor de clínica</NativeSelectOption><NativeSelectOption value="other">Outros</NativeSelectOption></NativeSelect><FieldError>{errors.role}</FieldError></div>
-          <div className="[&_[data-slot=native-select-wrapper]]:w-full"><Label htmlFor="revenueRange" className="mb-2 text-[#173D5D]">Faixa de faturamento por mês *</Label><NativeSelect id="revenueRange" required className="form-field w-full" value={data.revenueRange} onChange={(event) => update("revenueRange", event.target.value)} aria-invalid={!!errors.revenueRange}><NativeSelectOption value="">Selecione uma faixa</NativeSelectOption><NativeSelectOption value="under-40k">&lt; 40 mil</NativeSelectOption><NativeSelectOption value="40k-70k">40 a 70 mil</NativeSelectOption><NativeSelectOption value="70k-100k">70 a 100 mil</NativeSelectOption><NativeSelectOption value="over-100k">&gt; 100 mil</NativeSelectOption></NativeSelect><FieldError>{errors.revenueRange}</FieldError></div>
-          {data.role === "other" && <div className="xl:col-span-2"><Label htmlFor="otherRole" className="mb-2 text-[#173D5D]">Caso tenha selecionado Outros, especifique seu cargo *</Label><Input id="otherRole" required className="form-field" placeholder="Seu cargo na clínica" value={data.otherRole} onChange={(event) => update("otherRole", event.target.value)} aria-invalid={!!errors.otherRole} /><FieldError>{errors.otherRole}</FieldError></div>}
+          <div><Label htmlFor="name" className="mb-2 text-[#173D5D]">Nome completo *</Label><Input id="name" autoComplete="name" required className="form-field" placeholder="Seu nome completo" value={data.name} onChange={(event) => update("name", event.target.value)} aria-invalid={!!errors.name} aria-describedby={errors.name ? 'name-error' : undefined} /><FieldError field="name">{errors.name}</FieldError></div>
+          <div><Label htmlFor="email" className="mb-2 text-[#173D5D]">E-mail *</Label><Input id="email" type="email" autoComplete="email" required className="form-field" placeholder="voce@exemplo.com" value={data.email} onChange={(event) => update("email", event.target.value)} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} /><FieldError field="email">{errors.email}</FieldError></div>
+          <div><Label htmlFor="phone" className="mb-2 text-[#173D5D]">WhatsApp *</Label><Input id="phone" type="tel" inputMode="tel" autoComplete="tel" required className="form-field" placeholder="(11) 99999-9999" value={data.phone} onChange={(event) => update("phone", formatPhone(event.target.value))} aria-invalid={!!errors.phone} aria-describedby={errors.phone ? 'phone-error' : undefined} /><FieldError field="phone">{errors.phone}</FieldError></div>
+          <div><Label htmlFor="instagram" className="mb-2 text-[#173D5D]">Qual o @ do Instagram? *</Label><Input id="instagram" autoCapitalize="none" autoComplete="off" spellCheck={false} required className="form-field" placeholder="@seuperfil" value={data.instagram} onChange={(event) => update("instagram", event.target.value)} aria-invalid={!!errors.instagram} aria-describedby={errors.instagram ? 'instagram-error' : undefined} /><FieldError field="instagram">{errors.instagram}</FieldError></div>
+          <div className="[&_[data-slot=native-select-wrapper]]:w-full"><Label htmlFor="role" className="mb-2 text-[#173D5D]">Qual seu cargo na clínica? *</Label><NativeSelect id="role" required className="form-field w-full" value={data.role} onChange={(event) => update("role", event.target.value)} aria-invalid={!!errors.role} aria-describedby={errors.role ? 'role-error' : undefined}><NativeSelectOption value="">Selecione seu cargo</NativeSelectOption><NativeSelectOption value="doctor">Médico</NativeSelectOption><NativeSelectOption value="owner-manager">Dono ou Gestor de clínica</NativeSelectOption><NativeSelectOption value="other">Outros</NativeSelectOption></NativeSelect><FieldError field="role">{errors.role}</FieldError></div>
+          <div className="[&_[data-slot=native-select-wrapper]]:w-full"><Label htmlFor="revenueRange" className="mb-2 text-[#173D5D]">Faixa de faturamento por mês *</Label><NativeSelect id="revenueRange" required className="form-field w-full" value={data.revenueRange} onChange={(event) => update("revenueRange", event.target.value)} aria-invalid={!!errors.revenueRange} aria-describedby={errors.revenueRange ? 'revenueRange-error' : undefined}><NativeSelectOption value="">Selecione uma faixa</NativeSelectOption><NativeSelectOption value="under-40k">&lt; 40 mil</NativeSelectOption><NativeSelectOption value="40k-70k">40 a 70 mil</NativeSelectOption><NativeSelectOption value="70k-100k">70 a 100 mil</NativeSelectOption><NativeSelectOption value="over-100k">&gt; 100 mil</NativeSelectOption></NativeSelect><FieldError field="revenueRange">{errors.revenueRange}</FieldError></div>
+          {data.role === "other" && <div className="xl:col-span-2"><Label htmlFor="otherRole" className="mb-2 text-[#173D5D]">Caso tenha selecionado Outros, especifique seu cargo *</Label><Input id="otherRole" required className="form-field" placeholder="Seu cargo na clínica" value={data.otherRole} onChange={(event) => update("otherRole", event.target.value)} aria-invalid={!!errors.otherRole} aria-describedby={errors.otherRole ? 'otherRole-error' : undefined} /><FieldError field="otherRole">{errors.otherRole}</FieldError></div>}
           <div className="xl:col-span-2"><Label htmlFor="couponCode" className="mb-2 text-[#173D5D]">Tem um cupom de convite?</Label><Input id="couponCode" autoCapitalize="none" autoComplete="off" spellCheck={false} maxLength={80} className="form-field" placeholder="Digite seu cupom (opcional)" value={data.couponCode} onChange={(event) => update("couponCode", formatCouponInput(event.target.value))} onBlur={() => {
             const typedCoupon = latestDataRef.current.couponCode.trim();
             if (!typedCoupon || couponTrackedRef.current === typedCoupon) return;
@@ -550,7 +559,7 @@ export function ApplicationForm() {
               form_id: FORM_ID,
             });
             if (!validCoupon) trackValidationError("couponCode", "Cupom não reconhecido.");
-          }} aria-invalid={!!errors.couponCode || !!(data.couponCode.trim() && !coupon)} /><FieldError>{errors.couponCode}</FieldError>{coupon ? <p className="mt-1.5 text-xs font-semibold text-[#1F7558]">Cupom aplicado: sua inscrição será gratuita.</p> : data.couponCode.trim() && !errors.couponCode ? <p className="mt-1.5 text-xs font-medium text-[#B33D3D]">Cupom não reconhecido. Confira o código ou remova-o para continuar com a inscrição paga.</p> : null}</div>
+          }} aria-invalid={!!errors.couponCode || !!(data.couponCode.trim() && !coupon)} aria-describedby={errors.couponCode ? 'couponCode-error' : undefined} /><FieldError field="couponCode">{errors.couponCode}</FieldError>{coupon ? <p className="mt-1.5 text-xs font-semibold text-[#1F7558]">Cupom aplicado: sua inscrição será gratuita.</p> : data.couponCode.trim() && !errors.couponCode ? <p className="mt-1.5 text-xs font-medium text-[#B33D3D]">Cupom não reconhecido. Confira o código ou remova-o para continuar com a inscrição paga.</p> : null}</div>
           <div className="xl:col-span-2">
             <div className={`flex items-start gap-3 rounded-xl border p-3.5 text-xs leading-5 transition-colors ${data.whatsappConsent ? "border-[#B9DED4] bg-[#F1FAF7] text-[#456A61]" : "border-[#E7D2AE] bg-[#FBF6ED] text-[#526C80]"}`}>
               <Switch
@@ -559,7 +568,7 @@ export function ApplicationForm() {
                 onCheckedChange={(checked) => update("whatsappConsent", checked)}
                 aria-required="true"
                 aria-invalid={!!errors.whatsappConsent}
-                aria-describedby={data.whatsappConsent ? undefined : "whatsapp-consent-help"}
+                aria-describedby={[!data.whatsappConsent && "whatsapp-consent-help", errors.whatsappConsent && "whatsappConsent-error"].filter(Boolean).join(" ") || undefined}
                 className="mt-0.5 !h-7 !w-12 cursor-pointer data-[state=checked]:!bg-[#43CDB5] data-[state=unchecked]:!bg-[#C9D7DD] [&_[data-slot=switch-thumb]]:!size-6 [&_[data-slot=switch-thumb]]:shadow-[0_1px_4px_rgb(0_38_71/24%)]"
               />
               <div className="min-w-0">
@@ -568,7 +577,7 @@ export function ApplicationForm() {
                 <a className="mt-1 block font-semibold text-[#002647] underline" href="https://metrics.x5med.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Política de Privacidade ↗</a>
               </div>
             </div>
-            <FieldError>{errors.whatsappConsent}</FieldError>
+            <FieldError field="whatsappConsent">{errors.whatsappConsent}</FieldError>
             <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-[#D9E3EA] bg-[#F7FAFC] p-3.5 text-xs leading-5 text-[#526C80]">
               <input type="checkbox" checked={data.metaAdsConsent} onChange={e=>update('metaAdsConsent',e.target.checked)} className="mt-1 size-4 shrink-0 accent-[#002647]" />
               <span>{META_CAPI_CONSENT_TEXT} <a className="font-semibold text-[#002647] underline" href="https://metrics.x5med.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Saiba mais na Política de Privacidade ↗</a></span>

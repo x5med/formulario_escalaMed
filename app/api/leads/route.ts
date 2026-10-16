@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { META_CAPI_CONSENT_VERSION, WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
 import { normalizeCoupon } from "@/lib/coupons";
 import { MetricsSyncError, syncLeadToMetrics, type MetricsLeadPayload } from "@/lib/metrics";
+import { applicationPhoneKey, validateApplication, VALIDATION_SUMMARY } from '@/lib/application-validation';
 
 export const runtime = "nodejs";
 
@@ -12,8 +13,6 @@ function text(value: unknown, max = 500) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
-const roles = new Set(["doctor", "owner-manager", "other"]);
-const revenueRanges = new Set(["under-40k", "40k-70k", "70k-100k", "over-100k"]);
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const numberPattern = /\p{N}/u;
 
@@ -22,7 +21,7 @@ function metricsPayload(id: string, payload: Payload, status: "started" | "compl
     sourceLeadId: id,
     name: text(payload.name, 120),
     email: text(payload.email, 180).toLowerCase(),
-    phone: text(payload.phone, 30),
+    phone: applicationPhoneKey(text(payload.phone, 40)),
     instagram: text(payload.instagram, 120).replace(/^@/, ""),
     role: text(payload.role, 40) || null,
     otherRole: text(payload.otherRole, 160) || null,
@@ -68,12 +67,6 @@ export async function POST(request: Request) {
   if (!payload) return NextResponse.json({ error: "Dados inválidos." }, { status: 400 });
   if (payload.metaAdsConsent !== undefined && typeof payload.metaAdsConsent !== 'boolean') return NextResponse.json({ error: 'Escolha de compartilhamento inválida.' }, {status:400});
 
-  const couponInput = text(payload.couponCode, 80);
-  const couponCode = couponInput ? normalizeCoupon(couponInput) : null;
-  if (couponInput && !couponCode) {
-    return NextResponse.json({ error: "Cupom não reconhecido. Confira o código ou remova-o para continuar com a inscrição paga.", field: "couponCode" }, { status: 400 });
-  }
-
   const requestedId = text(payload.sourceLeadId, 80);
   if (requestedId && !uuidPattern.test(requestedId)) {
     return NextResponse.json({ error: "Identificação da inscrição inválida." }, { status: 400 });
@@ -81,17 +74,14 @@ export async function POST(request: Request) {
   const id = requestedId || crypto.randomUUID();
   if (text(payload.companyWebsite, 100)) return NextResponse.json({ id, access: "free" });
 
+  const errors = validateApplication(payload);
+  const firstField = Object.keys(errors)[0];
+  if (firstField) return NextResponse.json({ error: VALIDATION_SUMMARY, code: 'validation_error', field: firstField, errors }, { status: 400 });
+  const couponInput = text(payload.couponCode, 80);
+  const couponCode = couponInput ? normalizeCoupon(couponInput) : null;
   const lead = metricsPayload(id, payload, "completed", couponCode);
-  if (numberPattern.test(lead.name)) {
-    return NextResponse.json({ error: "O nome não pode conter números.", field: "name" }, { status: 400 });
-  }
-  const validIdentity = lead.name.length >= 3 && /^\S+@\S+\.\S+$/.test(lead.email)
-    && lead.phone.replace(/\D/g, "").length >= 10
-    && /^[A-Za-z0-9._]{1,30}$/.test(lead.instagram);
-  const validAnswers = roles.has(lead.role || "") && revenueRanges.has(lead.revenueRange || "")
-    && (lead.role !== "other" || (lead.otherRole?.length || 0) >= 2);
-  if (!validIdentity || !validAnswers || payload.whatsappConsent !== true || !/^https?:\/\//i.test(lead.pageUrl || "")) {
-    return NextResponse.json({ error: "Revise todos os campos obrigatórios antes de concluir." }, { status: 400 });
+  if (!/^https?:\/\//i.test(lead.pageUrl || "")) {
+    return NextResponse.json({ error: 'Não foi possível verificar a página do formulário. Atualize a página e tente novamente.', code: 'invalid_page' }, { status: 400 });
   }
 
   // O destino do pagamento é fixado no servidor e nunca aceito do navegador.
@@ -107,7 +97,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[leads POST] Metrics sync failed", error instanceof Error ? error.message : error);
     if (error instanceof MetricsSyncError && error.needsReview) return NextResponse.json({ error: error.message, code: 'registration_review' }, { status: 409 });
-    return NextResponse.json({ error: "Não foi possível registrar sua inscrição. Tente novamente." }, { status: 502 });
+    return NextResponse.json({ error: 'O serviço de inscrições está indisponível no momento. Seus dados foram mantidos; tente novamente em instantes.', code: 'service_unavailable' }, { status: 502 });
   }
 
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-16 — Erros de preenchimento por campo
+
+- Tela e API compartilham as mesmas regras de nome, e-mail, telefone brasileiro, usuário do Instagram, cargo, faturamento, cupom e autorização obrigatória de contato. Telefones com DDI e celulares legados usam a normalização do CRM; formatos inválidos e sequências fictícias recebem orientação e exemplo.
+- Mensagens aparecem abaixo do campo ao sair dele ou tentar concluir; erros retornados pela API são associados aos campos, com foco no primeiro problema e atributos acessíveis. Dados digitados e rascunho são preservados, sem truncar silenciosamente nome/e-mail inválidos.
+- Indisponibilidade do serviço tem aviso separado, sem atribuir a falha ao preenchimento. Compartilhamento Meta continua opcional e desmarcado por padrão; não altera regras de identidade, tombstones, inscrição ou consentimento do CRM.
+- Testes Node de validação/API/UI, lint, tipagem, build e conferência visual desktop/celular. Casos inválidos são barrados antes de chamar o CRM, sem inscrições ou mensagens reais durante os testes.
+
 ## 2026-10-16 — Novo cupom SAUDE
 
 - SAUDE libera a inscrição gratuita, aceitando variações de maiúsculas, minúsculas, acentos e espaços, e segue identificado no envio ao Metrics.
