@@ -11,6 +11,7 @@ const coupons = new Map([
   ["cs", "CS"],
   ["bioma100", "Bioma100"],
   ["saude", "SAUDE"],
+  ["terapeutica", "Terapeutica"],
 ]);
 
 export function normalizeCoupon(value: string): string | null {

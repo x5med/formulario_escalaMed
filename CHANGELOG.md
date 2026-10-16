@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-16 — Novo cupom Terapeutica
+
+- Terapeutica libera a inscrição gratuita e aceita variações de maiúsculas, acentos e espaços, com envio do código normalizado ao Metrics.
+
 ## 2026-10-16 — Erros de preenchimento por campo
 
 - Tela e API compartilham as mesmas regras de nome, e-mail, telefone brasileiro, usuário do Instagram, cargo, faturamento, cupom e autorização obrigatória de contato. Telefones com DDI e celulares legados usam a normalização do CRM; formatos inválidos e sequências fictícias recebem orientação e exemplo.
