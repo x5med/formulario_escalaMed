@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-16 — Autorização opcional mais discreta
+
+- Texto resumido para a medição de campanhas da Meta, sem caixa colorida ou borda competindo com a autorização de WhatsApp.
+- Explicação completa disponível em “Como seus dados são usados”, mantendo a escolha opcional desmarcada e o mesmo escopo de compartilhamento.
+
 ## 2026-10-16 — Novo cupom Terapeutica
 
 - Terapeutica libera a inscrição gratuita e aceita variações de maiúsculas, acentos e espaços, com envio do código normalizado ao Metrics.

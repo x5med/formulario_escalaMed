@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Switch } from "@/components/ui/switch";
-import { META_CAPI_CONSENT_TEXT, WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
+import { META_CAPI_CONSENT_SUMMARY, META_CAPI_CONSENT_TEXT, WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
 import { formatCouponInput, normalizeCoupon } from "@/lib/coupons";
 import { APPLICATION_FIELDS, ApplicationValidationError, readApplicationErrors, validateApplication, VALIDATION_SUMMARY, type ApplicationField } from '@/lib/application-validation';
 import {
@@ -578,10 +578,19 @@ export function ApplicationForm() {
               </div>
             </div>
             <FieldError field="whatsappConsent">{errors.whatsappConsent}</FieldError>
-            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-[#D9E3EA] bg-[#F7FAFC] p-3.5 text-xs leading-5 text-[#526C80]">
-              <input type="checkbox" checked={data.metaAdsConsent} onChange={e=>update('metaAdsConsent',e.target.checked)} className="mt-1 size-4 shrink-0 accent-[#002647]" />
-              <span>{META_CAPI_CONSENT_TEXT} <a className="font-semibold text-[#002647] underline" href="https://metrics.x5med.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Saiba mais na Política de Privacidade ↗</a></span>
-            </label>
+            <div className="mt-4 px-1 text-xs leading-5 text-[#60778A]">
+              <label className="flex cursor-pointer items-start gap-2.5">
+                <input id="meta-ads-consent" type="checkbox" checked={data.metaAdsConsent} onChange={e=>update('metaAdsConsent',e.target.checked)} className="mt-1 size-3.5 shrink-0 accent-[#002647]" />
+                <span>{META_CAPI_CONSENT_SUMMARY} <span className="text-[#60778A]">(Opcional)</span></span>
+              </label>
+              <details className="ml-6 mt-1">
+                <summary className="w-fit cursor-pointer rounded-sm underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#002647]">Como seus dados são usados</summary>
+                <div className="mt-2 space-y-1">
+                  <p>{META_CAPI_CONSENT_TEXT}</p>
+                  <a className="inline-block font-medium text-[#173D5D] underline" href="https://metrics.x5med.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Política de Privacidade ↗</a>
+                </div>
+              </details>
+            </div>
           </div>
         </div>
 
