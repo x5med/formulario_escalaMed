@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-19 — Novo cupom Varanda
+
+- Varanda libera a inscrição gratuita, aceita maiúsculas, minúsculas, acentos e espaços, com identificação do cupom no Metrics.
+
 ## 2026-10-16 — Autorização opcional mais discreta
 
 - Texto resumido para a medição de campanhas da Meta, sem caixa colorida ou borda competindo com a autorização de WhatsApp.
