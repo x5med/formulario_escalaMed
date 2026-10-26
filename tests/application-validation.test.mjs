@@ -53,7 +53,7 @@ test('UI keeps inputs and connects accessible field messages, blur and server er
   assert.match(ui,/readApplicationErrors\(result.errors\)/);
   assert.match(ui,/error instanceof ApplicationValidationError/);
   assert.match(ui,/setErrors\(error.fields\)/);
-  assert.match(ui,/document.getElementById\(Object.keys\(error.fields\)\[0\]\)\?\.focus/);
+  assert.match(ui,/focusApplicationField\(Object.keys\(error.fields\)\[0\]\)/);
   for(const field of validation.APPLICATION_FIELDS) assert.ok(ui.includes(`<FieldError field="${field}">`),field);
   assert.match(ui,/aria-live="polite"/);
   assert.match(ui,/aria-describedby=\{errors.phone \? 'phone-error'/);

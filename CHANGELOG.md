@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-26 — Clique na inscrição orienta o preenchimento
+
+- Botão clicável com formulário vazio ou incompleto, exibindo os erros existentes e levando o foco ao primeiro campo pendente com rolagem centralizada.
+- A autorização de WhatsApp continua obrigatória na validação e na API; o botão fica desativado somente durante o envio.
+- Erros de campo retornados pelo servidor recebem o mesmo direcionamento, respeitando a preferência por movimento reduzido.
+
 ## 2026-10-19 — Novo cupom Varanda
 
 - Varanda libera a inscrição gratuita, aceita maiúsculas, minúsculas, acentos e espaços, com identificação do cupom no Metrics.

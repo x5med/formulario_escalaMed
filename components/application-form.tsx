@@ -194,6 +194,18 @@ function FieldError({ field, children }: { field: ApplicationField; children?: s
   return <p id={`${field}-error`} aria-live="polite" className="mt-1.5 text-xs font-medium text-[#B33D3D]">{children}</p>;
 }
 
+function focusApplicationField(field: string) {
+  window.requestAnimationFrame(() => {
+    const input = document.getElementById(field);
+    if (!input) return;
+    input.focus({ preventScroll: true });
+    input.scrollIntoView({
+      block: "center",
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+    });
+  });
+}
+
 export function ApplicationForm() {
   const [data, setData] = useState<ApplicationData>(initialData);
   const [draftReady, setDraftReady] = useState(false);
@@ -467,7 +479,7 @@ export function ApplicationForm() {
       const firstField = Object.keys(nextErrors)[0];
       setRequestError(VALIDATION_SUMMARY);
       trackValidationError(firstField, nextErrors[firstField as ApplicationField] || VALIDATION_SUMMARY);
-      document.getElementById(firstField)?.focus();
+      focusApplicationField(firstField);
       return;
     }
 
@@ -481,7 +493,7 @@ export function ApplicationForm() {
       submittingRef.current = false;
       if (error instanceof ApplicationValidationError) {
         setErrors(error.fields);
-        document.getElementById(Object.keys(error.fields)[0])?.focus();
+        focusApplicationField(Object.keys(error.fields)[0]);
       }
       const message = error instanceof Error ? error.message : "Não foi possível registrar sua inscrição. Tente novamente.";
       trackValidationError("submission", message, "server");
@@ -573,7 +585,7 @@ export function ApplicationForm() {
               />
               <div className="min-w-0">
                 <label htmlFor="whatsappConsent" className="cursor-pointer font-medium">{WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT}</label>
-                {!data.whatsappConsent && <p id="whatsapp-consent-help" className="mt-1 font-semibold text-[#8A6335]">Ative esta opção para liberar o envio da inscrição.</p>}
+                {!data.whatsappConsent && <p id="whatsapp-consent-help" className="mt-1 font-semibold text-[#8A6335]">Ative esta opção para concluir sua inscrição.</p>}
                 <a className="mt-1 block font-semibold text-[#002647] underline" href="https://metrics.x5med.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Política de Privacidade ↗</a>
               </div>
             </div>
@@ -596,7 +608,7 @@ export function ApplicationForm() {
 
         {requestError && <p role="alert" className="mt-5 rounded-xl bg-[#FFF1F1] px-4 py-3 text-sm text-[#A63838]">{requestError}</p>}
 
-        <Button type="submit" className="mt-6 h-12 w-full rounded-xl bg-[#002647] px-6 text-white shadow-[0_10px_24px_rgb(0_38_71/18%)] hover:bg-[#06395F] disabled:cursor-not-allowed disabled:bg-[#8798A6]" disabled={loading || !data.whatsappConsent}>
+        <Button type="submit" className="mt-6 h-12 w-full rounded-xl bg-[#002647] px-6 text-white shadow-[0_10px_24px_rgb(0_38_71/18%)] hover:bg-[#06395F] disabled:cursor-not-allowed disabled:bg-[#8798A6]" disabled={loading}>
           {loading ? <><Loader2 className="animate-spin" /> Registrando...</> : coupon ? <>Concluir inscrição gratuita <Check /></> : <>Continuar para pagamento <ArrowRight /></>}
         </Button>
         <p className="mt-3 text-center text-xs leading-5 text-[#6F8292]">{coupon ? "Nenhum pagamento será necessário com este cupom." : "Você será direcionado ao pagamento após enviar seus dados."}</p>
