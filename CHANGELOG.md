@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-26 — Benefício acima dos campos
+
+- Texto de abertura atualizado para “Análise do seu perfil e retorno de um consultor pelo WhatsApp.”
+
 ## 2026-10-26 — Ação de inscrição sempre à mão
 
 - Botão de envio com o texto “Quero garantir minha vaga”, tanto com cupom quanto na inscrição paga.

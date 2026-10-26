@@ -521,7 +521,7 @@ export function ApplicationForm() {
       <div className="mb-5">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#C69858]">Inscrição EscalaMED 2026</p>
         <h2 className="mt-2 text-[1.65rem] font-semibold leading-tight tracking-[-0.035em] text-[#002647] sm:text-3xl">Garanta sua inscrição</h2>
-        <p className="mt-2 text-sm leading-6 text-[#60778A]">Preencha seus dados para participar. Você pode usar um cupom de convite para ter acesso gratuito.</p>
+        <p className="mt-2 text-sm leading-6 text-[#60778A]">Análise do seu perfil e retorno de um consultor pelo WhatsApp.</p>
       </div>
 
       <div className="mb-6 rounded-2xl border border-[#E7D2AE] bg-[#FBF6ED] px-5 py-4 text-[#002647]">
