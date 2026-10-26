@@ -98,6 +98,20 @@ button, input, select, textarea { font: inherit; }
 .form-field[aria-invalid="true"]:focus-visible {
   box-shadow: 0 0 0 3px rgb(179 61 61 / 0.16);
 }
+.registration-form :is(input, select, button, summary) {
+  scroll-margin-block: 7rem;
+}
+.registration-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  margin-top: 0.75rem;
+  border-top: 1px solid #edf3f7;
+  padding-top: 0.75rem;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  background: rgb(255 255 255 / 97%);
+  box-shadow: 0 -12px 20px rgb(255 255 255 / 95%);
+}
 @media (max-width: 1023px) {
   .brand-shell {
     background: radial-gradient(circle at 100% 0%, rgb(198 152 88 / 0.16), transparent 34rem), #002647;

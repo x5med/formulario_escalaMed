@@ -532,6 +532,7 @@ export function ApplicationForm() {
       </div>
 
       <form
+        className="registration-form"
         onSubmit={handleSubmit}
         onFocusCapture={trackFormStart}
         onBlur={(event) => {
@@ -592,7 +593,7 @@ export function ApplicationForm() {
               </div>
             </div>
             <FieldError field="whatsappConsent">{errors.whatsappConsent}</FieldError>
-            <div className="mt-4 px-1 text-xs leading-5 text-[#60778A]">
+            <div className="mt-3 px-1 text-xs leading-5 text-[#60778A]">
               <label className="flex cursor-pointer items-start gap-2.5">
                 <input id="meta-ads-consent" type="checkbox" checked={data.metaAdsConsent} onChange={e=>update('metaAdsConsent',e.target.checked)} className="mt-1 size-3.5 shrink-0 accent-[#002647]" />
                 <span>{META_CAPI_CONSENT_SUMMARY} <span className="text-[#60778A]">(Opcional)</span></span>
@@ -610,10 +611,12 @@ export function ApplicationForm() {
 
         {requestError && <p role="alert" className="mt-5 rounded-xl bg-[#FFF1F1] px-4 py-3 text-sm text-[#A63838]">{requestError}</p>}
 
-        <Button type="submit" className="mt-6 h-12 w-full rounded-xl bg-[#002647] px-6 text-white shadow-[0_10px_24px_rgb(0_38_71/18%)] hover:bg-[#06395F] disabled:cursor-not-allowed disabled:bg-[#8798A6]" disabled={loading}>
-          {loading ? <><Loader2 className="animate-spin" /> Registrando...</> : coupon ? <>Concluir inscrição gratuita <Check /></> : <>Continuar para pagamento <ArrowRight /></>}
-        </Button>
-        <p className="mt-3 text-center text-xs leading-5 text-[#6F8292]">{coupon ? "Nenhum pagamento será necessário com este cupom." : "Você será direcionado ao pagamento após enviar seus dados."}</p>
+        <div className="registration-actions">
+          <Button type="submit" className="h-12 w-full rounded-xl bg-[#002647] px-4 text-white shadow-[0_10px_24px_rgb(0_38_71/18%)] hover:bg-[#06395F] disabled:cursor-not-allowed disabled:bg-[#8798A6]" disabled={loading}>
+            {loading ? <><Loader2 className="animate-spin" /> Registrando...</> : <>Quero garantir minha vaga <ArrowRight /></>}
+          </Button>
+          <p className="mt-2 text-center text-xs leading-5 text-[#6F8292]">{coupon ? "Nenhum pagamento será necessário com este cupom." : "Você será direcionado ao pagamento após enviar seus dados."}</p>
+        </div>
       </form>
     </div>
   );

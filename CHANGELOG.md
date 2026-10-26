@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-26 — Ação de inscrição sempre à mão
+
+- Botão de envio com o texto “Quero garantir minha vaga”, tanto com cupom quanto na inscrição paga.
+- Área de envio acompanha a parte inferior da tela durante o preenchimento, dentro do formulário, com margem de rolagem nos controles e respeito à área segura do celular.
+- Espaçamento final reduzido; orientações de pagamento e gratuidade continuam junto ao botão.
+
 ## 2026-10-26 — WhatsApp, atribuição do checkout e eventos Meta
 
 - Prefixo +55 fixo no campo, normalização compartilhada de DDI e DDD, sem cortar silenciosamente números excessivos; telefone E.164 com + no dataLayer.
