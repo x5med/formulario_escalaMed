@@ -23,7 +23,7 @@ export default function Home() {
                 Sua clínica está pronta para o próximo nível?
               </h1>
               <p className="mt-5 max-w-lg text-base leading-7 text-white/70">
-                Participe da Imersão EscalaMED. A inscrição custa R$ 2.497,00. Com um cupom de convite válido, você participa gratuitamente.
+                Participe da Imersão EscalaMED. A inscrição custa R$ 2.497,00 à vista ou 12x de R$ 258,25 com juros. Com um cupom de convite válido, você participa gratuitamente.
               </p>
             </div>
           </div>
@@ -56,8 +56,23 @@ export default function Home() {
 
             <div className="mt-4 flex items-center justify-center gap-2 text-center text-xs text-white/55 lg:text-[#486176]">
               <ShieldCheck className="size-4 shrink-0 text-[#C69858]" />
-              Seus dados são tratados conforme suas escolhas e nossa Política de Privacidade.
+              <span>
+                Seus dados são tratados conforme suas escolhas e nossa{" "}
+                <a className="font-semibold underline underline-offset-4" href="https://metrics.x5med.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">
+                  Política de Privacidade
+                </a>.
+              </span>
             </div>
+
+            <footer className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-white/15 pt-4 text-center text-[0.68rem] text-white/50 lg:border-[#DCE5EC] lg:text-[#60778A]">
+              <span>© 2026 X5 MED LTDA</span>
+              <span aria-hidden="true">·</span>
+              <span>CNPJ 20.754.312/0001-06</span>
+              <span aria-hidden="true">·</span>
+              <a className="font-semibold underline underline-offset-4" href="https://metrics.x5med.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">
+                Política de Privacidade
+              </a>
+            </footer>
           </div>
         </section>
       </div>
