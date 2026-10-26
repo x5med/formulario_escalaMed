@@ -1,4 +1,6 @@
 import { normalizeCoupon } from './coupons';
+import { applicationPhoneKey } from './phone';
+export { applicationPhoneKey } from './phone';
 
 export const APPLICATION_FIELDS = ['name', 'email', 'phone', 'instagram', 'role', 'otherRole', 'revenueRange', 'couponCode', 'whatsappConsent'] as const;
 export type ApplicationField = typeof APPLICATION_FIELDS[number];
@@ -17,15 +19,6 @@ const messages: Record<ApplicationField, string> = {
   whatsappConsent: 'Ative a autorização de contato pelo WhatsApp para continuar com a inscrição.',
 };
 const text = (value: unknown) => typeof value === 'string' ? value.trim() : '';
-
-/** Same country/legacy ninth-digit normalization used by the CRM. */
-export function applicationPhoneKey(value: string): string {
-  let digits = value.replace(/\D/g, '').replace(/^00/, '');
-  if (digits.length > 11 && digits.startsWith('55')) digits = digits.slice(2);
-  digits = digits.replace(/^0+/, '');
-  if (digits.length === 10 && /^[1-9]{2}[6-9]/.test(digits)) digits = `${digits.slice(0, 2)}9${digits.slice(2)}`;
-  return digits;
-}
 
 export function validateApplication(data: Record<string, unknown>): ApplicationErrors {
   const errors: ApplicationErrors = {};

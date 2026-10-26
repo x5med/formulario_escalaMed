@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-26 — WhatsApp, atribuição do checkout e eventos Meta
+
+- Prefixo +55 fixo no campo, normalização compartilhada de DDI e DDD, sem cortar silenciosamente números excessivos; telefone E.164 com + no dataLayer.
+- Checkout recebe os parâmetros da sessão `x5_click_params`, além da URL atual e fallback legado, com tratamento de codificação.
+- Conclusão protegida contra repetição do mesmo envio; `sign_up` exige resposta gratuita e cupom válido, sem disparo no pagamento pendente.
+- Fontes dos eventos GTM/Meta e regra de qualificação do Metrics documentadas em `tracking/README.md`, com testes dos dois caminhos.
+
 ## 2026-10-26 — Clique na inscrição orienta o preenchimento
 
 - Botão clicável com formulário vazio ou incompleto, exibindo os erros existentes e levando o foco ao primeiro campo pendente com rolagem centralizada.

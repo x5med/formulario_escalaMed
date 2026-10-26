@@ -10,6 +10,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Switch } from "@/components/ui/switch";
 import { META_CAPI_CONSENT_SUMMARY, META_CAPI_CONSENT_TEXT, WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
 import { formatCouponInput, normalizeCoupon } from "@/lib/coupons";
+import { formatPhoneInput } from "@/lib/phone";
 import { APPLICATION_FIELDS, ApplicationValidationError, readApplicationErrors, validateApplication, VALIDATION_SUMMARY, type ApplicationField } from '@/lib/application-validation';
 import {
   decorateUrl,
@@ -158,17 +159,6 @@ function requestPayload(data: ApplicationData, id: string, completed: boolean) {
   };
 }
 
-function formatPhone(value: string) {
-  if (!/^[+\d() .\-]*$/.test(value)) return value;
-  let digits = value.replace(/\D/g, "");
-  if (digits.length > 11 && digits.startsWith('55')) digits = digits.slice(2);
-  if (digits.length > 11) return value;
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-}
-
 function validate(data: ApplicationData) {
   return validateApplication(data);
 }
@@ -224,6 +214,7 @@ export function ApplicationForm() {
   const submittingRef = useRef(false);
   const formStartedRef = useRef(false);
   const couponTrackedRef = useRef("");
+  const trackedSubmissionsRef = useRef(new Set<string>());
   const coupon = normalizeCoupon(data.couponCode);
 
   const leadId = useCallback(() => {
@@ -281,6 +272,8 @@ export function ApplicationForm() {
   }, []);
 
   const finishSubmission = useCallback((candidate: ApplicationData, result: SubmissionResult) => {
+    if (trackedSubmissionsRef.current.has(result.id)) return;
+    trackedSubmissionsRef.current.add(result.id);
     setReceiptId(result.receiptId || '');
     setProcessing(result.processing || '');
     const complimentary = result.access === "free";
@@ -305,7 +298,7 @@ export function ApplicationForm() {
     lastSavedRef.current = "";
 
     if (complimentary) {
-      pushTrackingEvent("sign_up", {
+      if (normalizedCoupon) pushTrackingEvent("sign_up", {
         method: "cupom_convite",
         form_id: FORM_ID,
         lead_id: result.id,
@@ -471,6 +464,7 @@ export function ApplicationForm() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
+    if (submittingRef.current) return;
     setRequestError("");
     const snapshot = latestDataRef.current;
     const nextErrors = validate(snapshot);
@@ -555,7 +549,15 @@ export function ApplicationForm() {
         <div className="grid gap-x-4 gap-y-4 xl:grid-cols-2">
           <div><Label htmlFor="name" className="mb-2 text-[#173D5D]">Nome completo *</Label><Input id="name" autoComplete="name" required className="form-field" placeholder="Seu nome completo" value={data.name} onChange={(event) => update("name", event.target.value)} aria-invalid={!!errors.name} aria-describedby={errors.name ? 'name-error' : undefined} /><FieldError field="name">{errors.name}</FieldError></div>
           <div><Label htmlFor="email" className="mb-2 text-[#173D5D]">E-mail *</Label><Input id="email" type="email" autoComplete="email" required className="form-field" placeholder="voce@exemplo.com" value={data.email} onChange={(event) => update("email", event.target.value)} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} /><FieldError field="email">{errors.email}</FieldError></div>
-          <div><Label htmlFor="phone" className="mb-2 text-[#173D5D]">WhatsApp *</Label><Input id="phone" type="tel" inputMode="tel" autoComplete="tel" required className="form-field" placeholder="(11) 99999-9999" value={data.phone} onChange={(event) => update("phone", formatPhone(event.target.value))} aria-invalid={!!errors.phone} aria-describedby={errors.phone ? 'phone-error' : undefined} /><FieldError field="phone">{errors.phone}</FieldError></div>
+          <div>
+            <Label htmlFor="phone" className="mb-2 text-[#173D5D]">WhatsApp *</Label>
+            <div className="relative">
+              <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center border-r border-[#DCE5EC] pr-2.5 text-sm font-medium text-[#526C80]">+55</span>
+              <Input id="phone" type="tel" inputMode="tel" autoComplete="tel-national" required className="form-field pl-[4.1rem]!" placeholder="(11) 99999-9999" value={data.phone} onChange={(event) => update("phone", formatPhoneInput(event.target.value))} aria-invalid={!!errors.phone} aria-describedby={['phone-country', errors.phone && 'phone-error'].filter(Boolean).join(' ')} />
+            </div>
+            <span id="phone-country" className="sr-only">Código do Brasil +55. Informe o DDD e o número.</span>
+            <FieldError field="phone">{errors.phone}</FieldError>
+          </div>
           <div><Label htmlFor="instagram" className="mb-2 text-[#173D5D]">Qual o @ do Instagram? *</Label><Input id="instagram" autoCapitalize="none" autoComplete="off" spellCheck={false} required className="form-field" placeholder="@seuperfil" value={data.instagram} onChange={(event) => update("instagram", event.target.value)} aria-invalid={!!errors.instagram} aria-describedby={errors.instagram ? 'instagram-error' : undefined} /><FieldError field="instagram">{errors.instagram}</FieldError></div>
           <div className="[&_[data-slot=native-select-wrapper]]:w-full"><Label htmlFor="role" className="mb-2 text-[#173D5D]">Qual seu cargo na clínica? *</Label><NativeSelect id="role" required className="form-field w-full" value={data.role} onChange={(event) => update("role", event.target.value)} aria-invalid={!!errors.role} aria-describedby={errors.role ? 'role-error' : undefined}><NativeSelectOption value="">Selecione seu cargo</NativeSelectOption><NativeSelectOption value="doctor">Médico</NativeSelectOption><NativeSelectOption value="owner-manager">Dono ou Gestor de clínica</NativeSelectOption><NativeSelectOption value="other">Outros</NativeSelectOption></NativeSelect><FieldError field="role">{errors.role}</FieldError></div>
           <div className="[&_[data-slot=native-select-wrapper]]:w-full"><Label htmlFor="revenueRange" className="mb-2 text-[#173D5D]">Faixa de faturamento por mês *</Label><NativeSelect id="revenueRange" required className="form-field w-full" value={data.revenueRange} onChange={(event) => update("revenueRange", event.target.value)} aria-invalid={!!errors.revenueRange} aria-describedby={errors.revenueRange ? 'revenueRange-error' : undefined}><NativeSelectOption value="">Selecione uma faixa</NativeSelectOption><NativeSelectOption value="under-40k">&lt; 40 mil</NativeSelectOption><NativeSelectOption value="40k-70k">40 a 70 mil</NativeSelectOption><NativeSelectOption value="70k-100k">70 a 100 mil</NativeSelectOption><NativeSelectOption value="over-100k">&gt; 100 mil</NativeSelectOption></NativeSelect><FieldError field="revenueRange">{errors.revenueRange}</FieldError></div>

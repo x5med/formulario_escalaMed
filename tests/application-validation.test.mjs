@@ -10,7 +10,7 @@ function load(file,mocks={}) {
   return mod.exports;
 }
 const coupons=load('lib/coupons.ts');
-const validation=load('lib/application-validation.ts',{'./coupons':coupons});
+const validation=load('lib/application-validation.ts',{'./coupons':coupons,'./phone':load('lib/phone.ts')});
 const valid={name:"Ana D'Ávila Souza",email:'ana@example.invalid',phone:'(11) 91234-5678',instagram:'@ana.souza',role:'doctor',revenueRange:'70k-100k',couponCode:'Bioma100',whatsappConsent:true,metaAdsConsent:false,pageUrl:'https://formulario-escalamed.x5med.com.br',sourceLeadId:'c0dec0de-0000-4000-8000-000000000016'};
 
 test('same validation accepts normal contacts, legacy mobile, international prefix and optional advertising consent',()=>{
@@ -56,7 +56,7 @@ test('UI keeps inputs and connects accessible field messages, blur and server er
   assert.match(ui,/focusApplicationField\(Object.keys\(error.fields\)\[0\]\)/);
   for(const field of validation.APPLICATION_FIELDS) assert.ok(ui.includes(`<FieldError field="${field}">`),field);
   assert.match(ui,/aria-live="polite"/);
-  assert.match(ui,/aria-describedby=\{errors.phone \? 'phone-error'/);
+  assert.match(ui,/aria-describedby=\{\['phone-country', errors.phone && 'phone-error'\]/);
   assert.match(ui,/const message = validate\(latestDataRef.current\)\[field\]/);
   assert.ok(!ui.includes('event.target.value.replace(/\\p{N}'));
 });

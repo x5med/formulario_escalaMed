@@ -1,3 +1,5 @@
+import { phoneNumberE164 } from "./phone";
+
 export const GTM_ID = "GTM-M4GT66JQ";
 export const FORM_ID = "escalamed-registration-2026";
 export const FORM_NAME = "Inscrição EscalaMED 2026";
@@ -27,6 +29,28 @@ export type Attribution = Partial<Record<AttributionKey, string>>;
 type DataLayerWindow = Window & { dataLayer?: unknown[] };
 
 const attributionStorageKey = "escalamed-attribution-v1";
+const gtmAttributionStorageKey = "x5_click_params";
+
+function storedAttribution(key: string, encoded = false): Attribution {
+  try {
+    const stored: unknown = JSON.parse(sessionStorage.getItem(key) || "{}");
+    if (!stored || typeof stored !== "object" || Array.isArray(stored)) return {};
+    const result: Attribution = {};
+    attributionKeys.forEach((name) => {
+      const raw = (stored as Record<string, unknown>)[name];
+      if (typeof raw !== "string" || !raw.trim()) return;
+      // GTM v14 captures the encoded query string; decode once before URLSearchParams.
+      let value = raw;
+      if (encoded) {
+        try { value = decodeURIComponent(raw.replace(/\+/g, " ")); } catch { /* Preserve malformed escapes as literal text. */ }
+      }
+      result[name] = value.trim();
+    });
+    return result;
+  } catch {
+    return {};
+  }
+}
 
 function canPersistAttribution() {
   return document.cookie.includes("x5med_consent=accepted");
@@ -40,14 +64,11 @@ export function readAttribution(): Attribution {
     if (value) current[key] = value;
   });
 
-  let stored: Attribution = {};
-  try {
-    stored = JSON.parse(sessionStorage.getItem(attributionStorageKey) || "{}") as Attribution;
-  } catch {
-    stored = {};
-  }
-
-  const attribution = { ...stored, ...current };
+  const attribution = {
+    ...storedAttribution(attributionStorageKey),
+    ...storedAttribution(gtmAttributionStorageKey, true),
+    ...current,
+  };
   if (canPersistAttribution() && Object.keys(attribution).length) {
     try {
       sessionStorage.setItem(attributionStorageKey, JSON.stringify(attribution));
@@ -110,7 +131,7 @@ export function trackAndNavigate(
 export function userData(email: string, phone: string) {
   return {
     email_address: email.trim().toLowerCase(),
-    phone_number: phone.replace(/\D/g, "").replace(/^(?!55)/, "55"),
+    phone_number: phoneNumberE164(phone),
   };
 }
 
