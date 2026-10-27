@@ -81,7 +81,7 @@ const initialData: ApplicationData = {
   otherRole: "",
   revenueRange: "",
   couponCode: "",
-  whatsappConsent: false,
+  whatsappConsent: true,
   metaAdsConsent: false,
   companyWebsite: "",
 };

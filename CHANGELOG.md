@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-27 — Opção de contato ativada inicialmente
+
+- O toggle de contato pelo WhatsApp começa ativado nas novas inscrições e pode ser desativado pelo usuário. Rascunhos continuam respeitando a escolha salva.
+
 ## 2026-10-26 — Benefício acima dos campos
 
 - Texto de abertura atualizado para “Análise do seu perfil e retorno de um consultor pelo WhatsApp.”
