@@ -1,0 +1,86 @@
+.wrapper {
+  position: relative;
+  width: 100%;
+  container-type: inline-size;
+  filter: drop-shadow(0 35px 45px rgba(0, 0, 0, .4));
+}
+.clipDefinition { position: absolute; pointer-events: none; }
+.tilt { transition: transform 350ms cubic-bezier(.22, 1, .36, 1); transform-origin: center; }
+.ticket { position: relative; isolation: isolate; display: grid; grid-template-columns: 75.84% 24.16%; min-height: 510px; color: var(--ticket-ink); background: var(--ticket-back); clip-path: var(--ticket-clip); }
+.content { display: flex; flex-direction: column; align-items: flex-start; gap: 30px; min-width: 0; padding: 4cqw 5.8cqw 5.5cqw 6.5cqw; }
+.ticketHeader { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 16px; }
+.logo { display: block; flex: 0 0 auto; width: 94px; aspect-ratio: 1374 / 963; margin-left: -15px; background: var(--ticket-ink); -webkit-mask: url("/assets/x5-med-logo.svg") center / contain no-repeat; mask: url("/assets/x5-med-logo.svg") center / contain no-repeat; }
+.status { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; }
+.status svg { width: 16px; height: 16px; flex-shrink: 0; }
+.message { width: 100%; }
+.product { margin: 0 0 14px; font-size: clamp(12px, 1.7cqw, 15px); font-weight: 600; line-height: 1.5; }
+.headline { margin: 0; max-width: 15ch; font-size: clamp(34px, 6.1cqw, 58px); font-weight: 650; line-height: 1.04; letter-spacing: -.055em; text-wrap: balance; }
+.description { max-width: 48ch; margin-top: 24px; font-size: clamp(15px, 1.9cqw, 18px); line-height: 1.7; font-weight: 450; letter-spacing: -.015em; }
+.action { display: inline-flex; align-items: center; justify-content: space-between; gap: 25px; margin-top: auto; min-height: 48px; padding: 14px 18px; border-radius: 8px; background: var(--ticket-ink); color: var(--ticket-back); font-size: 13px; font-weight: 650; line-height: 1.4; transition: translate 180ms ease, box-shadow 180ms ease; }
+.action svg { width: 17px; height: 17px; transition: transform 180ms ease; }
+.action:is(:hover, :focus-visible) { translate: 0 -2px; box-shadow: 0 6px 16px #0002; }
+.action:is(:hover, :focus-visible) svg { transform: translateY(3px); }
+.action:focus-visible { outline: 3px solid var(--ticket-ink); outline-offset: 5px; }
+.action:active { translate: 0 0; }
+.stub { position: relative; display: grid; place-items: center; overflow: hidden; border-left: 1px dashed color-mix(in srgb, var(--ticket-ink) 35%, transparent); }
+.watermark { position: absolute; color: var(--ticket-watermark); opacity: .45; font-size: 17cqw; font-weight: 800; letter-spacing: -.085em; line-height: 1; writing-mode: vertical-rl; pointer-events: none; }
+.watermarkLogo { position: absolute; width: 43cqw; aspect-ratio: 1374 / 963; transform: rotate(90deg); background-color: var(--ticket-watermark); opacity: .45; -webkit-mask: url("/assets/x5-med-logo.svg") center / contain no-repeat; mask: url("/assets/x5-med-logo.svg") center / contain no-repeat; pointer-events: none; }
+.stubText { position: relative; display: inline-flex; align-items: center; gap: 14px; font-size: clamp(30px, 5.6cqw, 52px); font-weight: 550; letter-spacing: -.035em; line-height: 1; writing-mode: vertical-rl; }
+.stubText svg { width: 28px; height: 28px; flex-shrink: 0; }
+.stubBrand { position: absolute; bottom: 5.5cqw; font-size: clamp(10px, 1.5cqw, 13px); font-weight: 750; letter-spacing: .02em; }
+.eventLogo { display: block; width: min(52%, 280px); height: auto; margin-block: 18px; }
+.eventDetails { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 22px; font-size: 12px; font-weight: 500; font-style: italic; line-height: 1.6; }
+.eventSeal { position: absolute; width: 96px; height: auto; bottom: 34px; }
+.wrapper[data-ticket="escalamed"] .ticketHeader { gap: 24px; }
+.wrapper[data-ticket="escalamed"] .headline { max-width: 16ch; font-family: var(--font-escalamed-anton), sans-serif; font-size: clamp(38px, 6.5cqw, 64px); font-weight: 400; line-height: 1.08; letter-spacing: .005em; text-transform: uppercase; }
+.wrapper[data-ticket="escalamed"] .product { font-weight: 600; }
+.wrapper[data-ticket="escalamed"] .description { font-weight: 400; font-size: clamp(14px, 1.75cqw, 16px); line-height: 1.75; }
+.wrapper[data-ticket="escalamed"] .action { background: #C69858; color: #002647; font-weight: 600; }
+.wrapper[data-ticket="escalamed"] .stub { color: #F7FAFD; background: #002647; border-left-color: #C6985880; }
+.wrapper[data-ticket="escalamed"] .watermark { opacity: .08; }
+.wrapper[data-ticket="escalamed"] .stubText { font-family: var(--font-escalamed-anton), sans-serif; font-weight: 400; text-transform: uppercase; letter-spacing: .025em; }
+@media (max-width: 640px) {
+  .ticket {
+    --mobile-stub-height: 76px;
+    --mobile-seam: calc(100% - var(--mobile-stub-height));
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto var(--mobile-stub-height);
+    min-height: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    clip-path: none;
+    /* The notches follow the content height and the horizontal perforation. */
+    -webkit-mask-image: radial-gradient(circle at 0 var(--mobile-seam), transparent 11px, #000 11.5px), radial-gradient(circle at 100% var(--mobile-seam), transparent 11px, #000 11.5px);
+    mask-image: radial-gradient(circle at 0 var(--mobile-seam), transparent 11px, #000 11.5px), radial-gradient(circle at 100% var(--mobile-seam), transparent 11px, #000 11.5px);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+  .content { padding: 22px clamp(22px, 6cqw, 32px) 28px; gap: 22px; }
+  .ticketHeader { align-items: center; flex-direction: row; flex-wrap: wrap; gap: 10px; }
+  .logo { width: 76px; margin-left: -12px; }
+  .status { font-size: 10px; gap: 5px; white-space: nowrap; }
+  .status svg { width: 13px; height: 13px; }
+  .product { font-size: 12px; margin-bottom: 12px; }
+  .headline { max-width: 17ch; font-size: clamp(30px, 8.8cqw, 42px); line-height: 1.08; }
+  .description { font-size: 14px; line-height: 1.65; margin-top: 18px; }
+  .action { width: 100%; min-height: 48px; margin-top: 0; padding: 13px 16px; gap: 12px; font-size: 12px; }
+  .action svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .stub { display: flex; align-items: center; justify-content: space-between; padding: 12px 26px; border-left: 0; border-top: 1px dashed color-mix(in srgb, var(--ticket-ink) 35%, transparent); }
+  .stubText { font-size: 22px; writing-mode: horizontal-tb; }
+  .stubText svg { width: 22px; height: 22px; }
+  .stubBrand { position: relative; bottom: auto; font-size: 10px; }
+  .watermark { right: 82px; font-size: 68px; writing-mode: horizontal-tb; opacity: .18; }
+  .watermarkLogo { width: 110px; right: 70px; top: 50%; transform: translateY(-50%); opacity: .18; }
+  .eventLogo { width: min(52%, 210px); margin-block: 14px; }
+  .eventSeal { position: relative; width: 50px; bottom: auto; }
+  .eventDetails { flex-direction: column; gap: 4px; font-size: 11px; margin-top: 18px; }
+  .wrapper[data-ticket="escalamed"] .ticketHeader { gap: 10px; }
+  .wrapper[data-ticket="escalamed"] .headline { font-size: clamp(34px, 10cqw, 48px); }
+  .wrapper[data-ticket="escalamed"] .description { font-size: 14px; }
+  .wrapper[data-ticket="escalamed"] .stub { border-top-color: #C6985880; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tilt, .action, .action svg { transition: none; }
+  .action:is(:hover, :focus-visible) { translate: none; }
+  .action:is(:hover, :focus-visible) svg { transform: none; }
+}

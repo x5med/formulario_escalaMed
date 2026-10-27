@@ -64,7 +64,7 @@ export default function Home() {
               </span>
             </div>
 
-            <footer className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-white/15 pt-4 text-center text-[0.68rem] text-white/50 lg:border-[#DCE5EC] lg:text-[#60778A]">
+            <footer data-registration-footer className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-white/15 pt-4 text-center text-[0.68rem] text-white/50 lg:border-[#DCE5EC] lg:text-[#60778A]">
               <span>© 2026 X5 MED LTDA</span>
               <span aria-hidden="true">·</span>
               <span>CNPJ 20.754.312/0001-06</span>

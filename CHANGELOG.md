@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-27 — Componentes originais da referência
+
+- Substituída a aproximação por componentes e recursos do `obrigado-x5med` em `0bc2798`: ingresso com inclinação, três camadas de faixas, transição de rolagem, cartões e checklist.
+- Preservados keyframes, velocidades, curvas e comportamento de movimento reduzido da origem. CSS isolado da inscrição; protocolo e reinício continuam integrados.
+- Rota `/obrigado` usa a mesma apresentação para conferência direta, sem cadastro ou disparo de conversão.
+
 ## 2026-10-27 — Movimentos da confirmação
 
 - Adaptadas as animações do repositório `x5med/obrigado-x5med` (referência `0bc2798`): entrada do ingresso, inclinação com o mouse, faixas contínuas/paralaxe e apresentação dos próximos passos conforme a rolagem.
