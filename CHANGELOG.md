@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-27 — Opção Meta marcada inicialmente
+
+- A opção de compartilhamento com a Meta começa marcada nas novas inscrições e continua opcional, podendo ser desmarcada pelo usuário.
+
 ## 2026-10-27 — Opção de contato ativada inicialmente
 
 - O toggle de contato pelo WhatsApp começa ativado nas novas inscrições e pode ser desativado pelo usuário. Rascunhos continuam respeitando a escolha salva.

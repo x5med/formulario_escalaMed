@@ -82,7 +82,7 @@ const initialData: ApplicationData = {
   revenueRange: "",
   couponCode: "",
   whatsappConsent: true,
-  metaAdsConsent: false,
+  metaAdsConsent: true,
   companyWebsite: "",
 };
 
