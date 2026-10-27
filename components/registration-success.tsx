@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { ArrowDown, ArrowUpRight, BadgeCheck, CalendarDays, ListChecks, MapPin, MessageCircle, Ticket, UserPlus } from "lucide-react";
+import { SuccessRibbons, useSuccessMotion } from './success-motion';
 
 const teamUrl = 'https://wa.me/5579998287305?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20sobre%20minha%20inscri%C3%A7%C3%A3o%20no%20EscalaMED.';
 const steps = [
@@ -13,13 +14,14 @@ const steps = [
 
 export function RegistrationSuccess({ name, receiptId, processing, onRestart }: { name: string; receiptId: string; processing: string; onRestart: () => void }) {
   const heading = useRef<HTMLHeadingElement>(null);
+  const motionRoot = useSuccessMotion();
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
     heading.current?.focus({ preventScroll: true });
   }, []);
 
   return (
-    <div className="registration-success">
+    <div ref={motionRoot} className="registration-success">
       <header className="success-header">
         <a href="#registration-success-title" aria-label="EscalaMed — início da página" className="success-brand">
           <Image src="/escalamed-logo-dark.png" alt="EscalaMed" width={675} height={120} className="h-auto w-[175px] sm:w-[195px]" />
@@ -32,9 +34,8 @@ export function RegistrationSuccess({ name, receiptId, processing, onRestart }: 
       </header>
 
       <section className="success-hero" aria-labelledby="registration-success-title">
-        <div aria-hidden="true" className="success-ribbon success-ribbon-one">Seu próximo passo começa aqui · Estratégia. Gestão. Crescimento.</div>
-        <div aria-hidden="true" className="success-ribbon success-ribbon-two">EscalaMED · A Rota do Crescimento · Seu próximo passo começa aqui.</div>
-        <div className="success-ticket">
+        <SuccessRibbons />
+        <div className="success-ticket-depth"><div className="success-ticket-arrival"><div className="success-ticket">
           <div className="success-ticket-body">
             <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3">
               <span className="inline-flex items-center text-[1.65rem] font-semibold tracking-[-0.06em] sm:text-[2.1rem]">EscalaMed<ArrowUpRight aria-hidden="true" className="size-8 text-[#C69858]" strokeWidth={3} /></span>
@@ -55,16 +56,16 @@ export function RegistrationSuccess({ name, receiptId, processing, onRestart }: 
             <span className="success-ticket-label">INGRESSO</span>
             <span className="relative flex size-16 items-center justify-center rounded-full border-2 border-white/70 text-sm font-extrabold">X5 MED</span>
           </div>
-        </div>
+        </div></div></div>
       </section>
 
       <section id="success-next-steps" className="success-next-steps scroll-mt-6" aria-labelledby="success-next-steps-title">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D3A45E]">Sua próxima etapa</p>
+        <div className="success-steps-heading"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#D3A45E]">Sua próxima etapa</p>
         <h2 id="success-next-steps-title" className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">Seus próximos passos</h2>
-        <p className="mt-3 max-w-xl text-sm leading-6 text-white/65">Agora que seu formulário foi recebido, veja como se preparar para o EscalaMED.</p>
+        <p className="mt-3 max-w-xl text-sm leading-6 text-white/65">Agora que seu formulário foi recebido, veja como se preparar para o EscalaMED.</p></div>
         <ol className="mt-7 grid gap-4 md:grid-cols-3">
           {steps.map(({ icon: Icon, title, description }, index) => (
-            <li key={title} className="rounded-2xl border border-white/15 bg-white/[0.04] p-6">
+            <li key={title} className="success-step rounded-2xl border border-white/15 bg-white/[0.04] p-6">
               <div className="flex items-center justify-between"><Icon className="size-6 text-[#D3A45E]" /><span className="text-xs font-semibold text-white/40">0{index + 1}</span></div>
               <h3 className="mt-5 text-base font-semibold leading-6 text-white">{title}</h3>
               <p className="mt-3 text-sm leading-6 text-white/65">{description}</p>

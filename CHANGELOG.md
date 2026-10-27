@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-27 — Movimentos da confirmação
+
+- Adaptadas as animações do repositório `x5med/obrigado-x5med` (referência `0bc2798`): entrada do ingresso, inclinação com o mouse, faixas contínuas/paralaxe e apresentação dos próximos passos conforme a rolagem.
+- Efeitos em camadas independentes, com requestAnimationFrame, listeners passivos e limpeza ao cadastrar outra pessoa. Preferência de movimento reduzido desliga as animações e mantém o conteúdo visível.
+
 ## 2026-10-27 — Confirmação em formato de ingresso
 
 - Nova confirmação com fundo azul, ingresso EscalaMED, datas e localização, baseada em `obrigado.x5med.com.br/escalamed`.

@@ -122,7 +122,7 @@ button, input, select, textarea { font: inherit; }
 .registration-shell:has(.registration-success) [data-registration-content] { display: block; padding: 0 1.25rem 2rem; background: transparent; }
 .registration-shell:has(.registration-success) [data-registration-panel] { max-width: 1120px; }
 .registration-shell:has(.registration-success) :is([data-registration-privacy], footer) { color: rgb(255 255 255 / 55%); border-color: rgb(255 255 255 / 15%); }
-.registration-success { color: #002647; }
+.registration-success { color: #002647; overflow-anchor: none; }
 .registration-success :is(a, button):focus-visible { outline: 2px solid #c69858; outline-offset: 5px; }
 .success-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1.5rem; padding-top: 1.75rem; }
 .success-brand { display: inline-flex; align-items: center; gap: 1.25rem; }
@@ -136,6 +136,46 @@ button, input, select, textarea { font: inherit; }
 .success-ticket-year { position: absolute; font-size: 8rem; font-weight: 800; line-height: 1; letter-spacing: -0.08em; writing-mode: vertical-rl; opacity: 0.06; }
 .success-ticket-label { position: relative; font-size: 2.75rem; font-weight: 800; line-height: 1; letter-spacing: -0.06em; writing-mode: vertical-rl; }
 .success-next-steps { padding: 1rem 0 3rem; }
+html:has(.registration-success) { scroll-behavior: smooth; }
+.success-header { animation: success-arrive 650ms cubic-bezier(.22, 1, .36, 1) both; }
+.success-ticket-depth { width: min(100%, 930px); min-width: 0; }
+.success-ticket-arrival { animation: success-ticket-arrive 850ms 80ms cubic-bezier(.22, 1, .36, 1) both; }
+.success-ticket { width: 100%; transition: transform 250ms ease-out; transform-style: preserve-3d; }
+.success-ribbons { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.success-ribbon { transition: transform 650ms cubic-bezier(.22, 1, .36, 1); }
+.success-ribbon-one { transform: translate(calc(-50% + var(--ribbon-x, 0px)), var(--ribbon-y, 0px)) rotate(calc(9deg + var(--ribbon-turn, 0deg))); }
+.success-ribbon-two { transform: translate(calc(-50% - var(--ribbon-x, 0px)), calc(var(--ribbon-y, 0px) * -.7)) rotate(calc(-10deg - var(--ribbon-turn, 0deg))); }
+.success-ribbon-track { display: flex; width: max-content; animation: success-ribbon-conveyor 64s linear infinite; }
+.success-ribbon-two .success-ribbon-track { animation-duration: 72s; animation-direction: reverse; }
+.success-ribbon-group { display: flex; flex: 0 0 auto; align-items: center; min-width: 160vw; gap: 30px; padding-right: 30px; }
+.success-ribbon-group span { display: inline-flex; align-items: center; gap: 30px; }
+.success-ribbon-group i { width: 23px; height: 11px; flex-shrink: 0; border: 2px solid #c69858; border-radius: 999px; }
+.registration-success[data-scroll-motion="true"] .success-ticket-depth { transform: translate3d(0, var(--ticket-drift, 0px), 0) scale(var(--ticket-depth, 1)); }
+.registration-success[data-scroll-motion="true"] .success-ribbons { translate: 0 var(--ribbons-drift, 0px); }
+.registration-success[data-scroll-motion="true"] .success-ticket { transform: perspective(1200px) rotateX(var(--ticket-rotate-x, 0deg)) rotateY(var(--ticket-rotate-y, 0deg)); }
+.registration-success[data-scroll-motion="true"] .success-steps-heading { translate: 0 var(--heading-rise, 0px); opacity: var(--heading-opacity, 1); }
+.registration-success[data-scroll-motion="true"] .success-step { translate: 0 var(--card-rise, 0px); rotate: var(--card-turn, 0deg); opacity: var(--card-opacity, 1); }
+.registration-success[data-scroll-motion="true"] :is(.success-ticket-depth, .success-ticket):has(a:focus-visible, button:focus-visible) { transform: none; }
+.registration-success[data-scroll-motion="true"] :is(.success-steps-heading, .success-step):focus-within { translate: none; rotate: none; opacity: 1; }
+.success-step { position: relative; isolation: isolate; transition: background-color 200ms ease, border-color 200ms ease; }
+.success-step::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; opacity: 0; background: radial-gradient(240px circle at var(--spot-x, 50%) var(--spot-y, 0%), rgb(198 152 88 / 16%), transparent 75%); transition: opacity 240ms ease; }
+@media (hover: hover) and (pointer: fine) {
+  .success-step:hover { background-color: rgb(255 255 255 / 7%); border-color: rgb(198 152 88 / 65%); }
+  .success-step:hover::before { opacity: 1; }
+  .success-step svg { transition: transform 240ms ease; }
+  .success-step:hover svg { transform: translateY(-3px) rotate(-5deg); }
+  .registration-success a svg { transition: transform 200ms ease; }
+  .registration-success a:hover > svg:last-child { transform: translateY(2px); }
+}
+@keyframes success-arrive { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes success-ticket-arrive { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes success-ribbon-conveyor { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  html:has(.registration-success) { scroll-behavior: auto; }
+  .registration-success *, .registration-success *::before, .registration-success *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .registration-success :is(.success-ticket-depth, .success-ticket, .success-steps-heading, .success-step) { transform: none !important; translate: none !important; rotate: none !important; opacity: 1 !important; }
+  .success-step::before { display: none; }
+}
 @media (max-width: 639px) {
   .success-header { padding-top: 1.5rem; gap: 1.25rem; }
   .success-hero { min-height: auto; padding: 2.5rem 0 3rem; }
