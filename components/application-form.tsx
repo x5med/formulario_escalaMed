@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Switch } from "@/components/ui/switch";
+import { RegistrationSuccess } from "@/components/registration-success";
 import { META_CAPI_CONSENT_SUMMARY, META_CAPI_CONSENT_TEXT, WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
 import { formatCouponInput, normalizeCoupon } from "@/lib/coupons";
 import { formatPhoneInput } from "@/lib/phone";
@@ -348,6 +349,7 @@ export function ApplicationForm() {
     setReceiptId('');
     setProcessing('');
     setPaymentUrl("");
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
   useEffect(() => {
@@ -497,7 +499,11 @@ export function ApplicationForm() {
     }
   };
 
-  if (completed || paymentUrl) {
+  if (completed) {
+    return <RegistrationSuccess name={data.name} receiptId={receiptId} processing={processing} onRestart={startAnotherRegistration} />;
+  }
+
+  if (paymentUrl) {
     return (
       <div className="rounded-[1.6rem] border border-white/60 bg-white px-6 py-12 text-center shadow-[0_30px_80px_rgb(0_24_44/18%)] sm:px-12 sm:py-16">
         <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-[#EDF3F1] text-[#1F7558]">

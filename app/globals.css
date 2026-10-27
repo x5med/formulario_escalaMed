@@ -112,6 +112,41 @@ button, input, select, textarea { font: inherit; }
   background: rgb(255 255 255 / 97%);
   box-shadow: 0 -12px 20px rgb(255 255 255 / 95%);
 }
+
+/* A completed registration uses the full page, rather than the form's sidebar. */
+.registration-shell:has(.registration-success) {
+  background: radial-gradient(ellipse at 70% 26%, #25475c 0, #0b2d48 32%, #002647 66%);
+}
+.registration-shell:has(.registration-success) [data-registration-layout] { display: block; }
+.registration-shell:has(.registration-success) :is([data-registration-intro], [data-registration-heading], [data-registration-decoration]) { display: none; }
+.registration-shell:has(.registration-success) [data-registration-content] { display: block; padding: 0 1.25rem 2rem; background: transparent; }
+.registration-shell:has(.registration-success) [data-registration-panel] { max-width: 1120px; }
+.registration-shell:has(.registration-success) :is([data-registration-privacy], footer) { color: rgb(255 255 255 / 55%); border-color: rgb(255 255 255 / 15%); }
+.registration-success { color: #002647; }
+.registration-success :is(a, button):focus-visible { outline: 2px solid #c69858; outline-offset: 5px; }
+.success-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1.5rem; padding-top: 1.75rem; }
+.success-brand { display: inline-flex; align-items: center; gap: 1.25rem; }
+.success-hero { position: relative; display: flex; align-items: center; justify-content: center; min-height: min(790px, calc(100svh - 86px)); padding: 5rem 0; isolation: isolate; }
+.success-ribbon { position: absolute; z-index: -1; left: 50%; width: 180vw; overflow: hidden; white-space: nowrap; padding: 0.65rem 0; background: rgb(233 241 247 / 75%); color: #173d5d; font-size: clamp(1.15rem, 2.6vw, 2rem); font-weight: 700; text-align: center; opacity: 0.55; filter: blur(1.5px); pointer-events: none; }
+.success-ribbon-one { top: 47%; transform: translateX(-50%) rotate(9deg); }
+.success-ribbon-two { top: 66%; transform: translateX(-50%) rotate(-10deg); opacity: 0.3; }
+.success-ticket { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 180px; width: min(100%, 930px); filter: drop-shadow(0 24px 50px rgb(0 10 26 / 25%)); mask-image: radial-gradient(circle at top left, transparent 22px, #000 23px), radial-gradient(circle at top right, transparent 22px, #000 23px), radial-gradient(circle at bottom left, transparent 22px, #000 23px), radial-gradient(circle at bottom right, transparent 22px, #000 23px); mask-composite: intersect; }
+.success-ticket-body { min-width: 0; padding: 2.75rem 3rem 3rem; background: #f7fafd; }
+.success-ticket-stub { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.25rem; overflow: hidden; border-left: 2px dashed rgb(255 255 255 / 25%); background: #002647; color: #f7fafd; }
+.success-ticket-year { position: absolute; font-size: 8rem; font-weight: 800; line-height: 1; letter-spacing: -0.08em; writing-mode: vertical-rl; opacity: 0.06; }
+.success-ticket-label { position: relative; font-size: 2.75rem; font-weight: 800; line-height: 1; letter-spacing: -0.06em; writing-mode: vertical-rl; }
+.success-next-steps { padding: 1rem 0 3rem; }
+@media (max-width: 639px) {
+  .success-header { padding-top: 1.5rem; gap: 1.25rem; }
+  .success-hero { min-height: auto; padding: 2.5rem 0 3rem; }
+  .success-ticket { grid-template-columns: minmax(0, 1fr); mask-image: radial-gradient(circle at top left, transparent 15px, #000 16px), radial-gradient(circle at top right, transparent 15px, #000 16px), radial-gradient(circle at bottom left, transparent 15px, #000 16px), radial-gradient(circle at bottom right, transparent 15px, #000 16px); }
+  .success-ticket-body { padding: 1.75rem 1.5rem 2rem; }
+  .success-ticket-stub { flex-direction: row; min-height: 96px; gap: 1rem; border-left: 0; border-top: 2px dashed rgb(255 255 255 / 25%); padding: 1.25rem; }
+  .success-ticket-label { writing-mode: horizontal-tb; font-size: 1.5rem; letter-spacing: 0.02em; }
+  .success-ticket-year { writing-mode: horizontal-tb; font-size: 6rem; }
+  .success-ticket-stub > span:last-child { width: 2.75rem; height: 2.75rem; font-size: 0.65rem; }
+  .success-next-steps { padding-bottom: 2rem; }
+}
 @media (max-width: 1023px) {
   .brand-shell {
     background: radial-gradient(circle at 100% 0%, rgb(198 152 88 / 0.16), transparent 34rem), #002647;

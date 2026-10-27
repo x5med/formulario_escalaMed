@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-27 — Confirmação em formato de ingresso
+
+- Nova confirmação com fundo azul, ingresso EscalaMED, datas e localização, baseada em `obrigado.x5med.com.br/escalamed`.
+- Próximos passos adaptados ao formulário: contato pelo WhatsApp, reserva das datas e chegada a Alphaville, sem afirmar pagamento ou aprovação.
+- Mantidos protocolo, aviso de cadastro em conferência e opção de cadastrar outra pessoa; caminho pago e eventos permanecem separados.
+
 ## 2026-10-27 — Opção Meta marcada inicialmente
 
 - A opção de compartilhamento com a Meta começa marcada nas novas inscrições e continua opcional, podendo ser desmarcada pelo usuário.

@@ -65,6 +65,7 @@ test('real completion callback emits one Lead per submission and sign_up only fo
     const component = load('components/application-form.tsx', {
       react,
       '@/components/ui/button': {}, '@/components/ui/input': {}, '@/components/ui/label': {}, '@/components/ui/native-select': {}, '@/components/ui/switch': {},
+      '@/components/registration-success': { RegistrationSuccess: () => null },
       '@/lib/consent': load('lib/consent.ts'), '@/lib/coupons': coupons, '@/lib/phone': phone,
       '@/lib/application-validation': load('lib/application-validation.ts', { './coupons': coupons, './phone': phone }),
       '@/lib/tracking': tracking,
