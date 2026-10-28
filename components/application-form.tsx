@@ -12,6 +12,7 @@ import { RegistrationSuccess } from "@/components/registration-success";
 import { META_CAPI_CONSENT_SUMMARY, META_CAPI_CONSENT_TEXT, WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
 import { formatCouponInput, normalizeCoupon } from "@/lib/coupons";
 import { formatPhoneInput } from "@/lib/phone";
+import { normalizeInstagram } from "@/lib/instagram";
 import { APPLICATION_FIELDS, ApplicationValidationError, readApplicationErrors, validateApplication, VALIDATION_SUMMARY, type ApplicationField } from '@/lib/application-validation';
 import {
   decorateUrl,
@@ -143,6 +144,7 @@ function requestPayload(data: ApplicationData, id: string, completed: boolean) {
   const { whatsappConsent, metaAdsConsent, ...answers } = data;
   return {
     ...answers,
+    instagram: normalizeInstagram(data.instagram),
     sourceLeadId: id,
     couponCode: data.couponCode.trim(),
     utmSource: attribution.utm_source || "",
@@ -543,6 +545,10 @@ export function ApplicationForm() {
         onFocusCapture={trackFormStart}
         onBlur={(event) => {
           const field = event.target.id as ApplicationField;
+          if (field === 'instagram') {
+            const instagram = normalizeInstagram(latestDataRef.current.instagram);
+            if (instagram) update('instagram', `@${instagram}`);
+          }
           if (APPLICATION_FIELDS.includes(field)) {
             const message = validate(latestDataRef.current)[field];
             setErrors(current => { const next = {...current}; if (message) next[field] = message; else delete next[field]; return next; });

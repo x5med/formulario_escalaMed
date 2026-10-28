@@ -4,6 +4,7 @@ import { META_CAPI_CONSENT_VERSION, WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } f
 import { normalizeCoupon } from "@/lib/coupons";
 import { MetricsSyncError, syncLeadToMetrics, type MetricsLeadPayload } from "@/lib/metrics";
 import { applicationPhoneKey, validateApplication, VALIDATION_SUMMARY } from '@/lib/application-validation';
+import { normalizeInstagram } from '@/lib/instagram';
 
 export const runtime = "nodejs";
 
@@ -22,7 +23,7 @@ function metricsPayload(id: string, payload: Payload, status: "started" | "compl
     name: text(payload.name, 120),
     email: text(payload.email, 180).toLowerCase(),
     phone: applicationPhoneKey(text(payload.phone, 40)),
-    instagram: text(payload.instagram, 120).replace(/^@/, ""),
+    instagram: normalizeInstagram(payload.instagram),
     role: text(payload.role, 40) || null,
     otherRole: text(payload.otherRole, 160) || null,
     revenueRange: text(payload.revenueRange, 40) || null,

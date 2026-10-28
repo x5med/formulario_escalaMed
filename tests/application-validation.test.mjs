@@ -10,7 +10,8 @@ function load(file,mocks={}) {
   return mod.exports;
 }
 const coupons=load('lib/coupons.ts');
-const validation=load('lib/application-validation.ts',{'./coupons':coupons,'./phone':load('lib/phone.ts')});
+const instagram=load('lib/instagram.ts');
+const validation=load('lib/application-validation.ts',{'./coupons':coupons,'./phone':load('lib/phone.ts'),'./instagram':instagram});
 const valid={name:"Ana D'Ávila Souza",email:'ana@example.invalid',phone:'(11) 91234-5678',instagram:'@ana.souza',role:'doctor',revenueRange:'70k-100k',couponCode:'Bioma100',whatsappConsent:true,metaAdsConsent:false,pageUrl:'https://formulario-escalamed.x5med.com.br',sourceLeadId:'c0dec0de-0000-4000-8000-000000000016'};
 
 test('same validation accepts normal contacts, legacy mobile, international prefix and optional advertising consent',()=>{
@@ -27,7 +28,7 @@ test('invalid phone structures and placeholders have a specific message, not a c
 });
 
 test('every required field explains format or missing selection without silently truncating',()=>{
-  const cases={name:['1234','Ana9','!!!','A','Ana😀','A'.repeat(121)],email:['ana@','ana @example.com','a@@b.com','a'.repeat(181)],instagram:['https://instagram.com/ana','@ana souza','@@ana','a'.repeat(31)],role:['unknown',''],revenueRange:['unknown',''],couponCode:['inexistente','x'.repeat(81)],whatsappConsent:[false,'true',null]};
+  const cases={name:['1234','Ana9','!!!','A','Ana😀','A'.repeat(121)],email:['ana@','ana @example.com','a@@b.com','a'.repeat(181)],instagram:['https://example.com/ana','ana@example.com','@ana!','https://instagram.com/p/ABC','a'.repeat(31)],role:['unknown',''],revenueRange:['unknown',''],couponCode:['inexistente','x'.repeat(81)],whatsappConsent:[false,'true',null]};
   for(const [field,values] of Object.entries(cases)) for(const value of values) {
     const errors=validation.validateApplication({...valid,[field]:value});assert.ok(errors[field],`${field}: ${value}`);assert.equal(Object.keys(errors).length,1);
   }
@@ -38,9 +39,9 @@ test('every required field explains format or missing selection without silently
 test('server returns all field errors before calling the CRM; valid and unavailable are distinct',async()=>{
   let writes=0,fail=false;
   class MetricsSyncError extends Error { needsReview=false; }
-  const route=load('app/api/leads/route.ts',{'next/server':{NextResponse:{json:Response.json}},'@/lib/application-validation':validation,'@/lib/coupons':coupons,'@/lib/consent':{META_CAPI_CONSENT_VERSION:'test',WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT:'test'},'@/lib/metrics':{MetricsSyncError,syncLeadToMetrics:async lead=>{writes++;if(fail)throw new MetricsSyncError('private server detail');assert.equal(lead.phone,'11912345678');return {};}}});
+  const route=load('app/api/leads/route.ts',{'next/server':{NextResponse:{json:Response.json}},'@/lib/application-validation':validation,'@/lib/instagram':instagram,'@/lib/coupons':coupons,'@/lib/consent':{META_CAPI_CONSENT_VERSION:'test',WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT:'test'},'@/lib/metrics':{MetricsSyncError,syncLeadToMetrics:async lead=>{writes++;if(fail)throw new MetricsSyncError('private server detail');assert.equal(lead.phone,'11912345678');return {};}}});
   const request=body=>new Request('https://example.invalid/api/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  const response=await route.POST(request({...valid,name:'Ana9',email:'ana@',phone:'1100000000',instagram:'https://instagram.com/ana'}));
+  const response=await route.POST(request({...valid,name:'Ana9',email:'ana@',phone:'1100000000',instagram:'https://example.com/ana'}));
   assert.equal(response.status,400);const body=await response.json();assert.equal(body.code,'validation_error');assert.deepEqual(Object.keys(body.errors),['name','email','phone','instagram']);assert.equal(body.field,'name');assert.equal(writes,0);
   const raw=await route.POST(request({...valid,name:'x'.repeat(121)}));assert.equal(raw.status,400);assert.equal(writes,0);
   assert.equal((await route.POST(request(valid))).status,201);assert.equal(writes,1);

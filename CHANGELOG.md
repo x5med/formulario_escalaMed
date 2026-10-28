@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-28 — Instagram padronizado antes do Metrics
+
+- Normalização compartilhada entre formulário, validação e API: remove espaços/caracteres invisíveis, padroniza caixa e @, e extrai o usuário de links de perfil.
+- Pontos e underscores são preservados; `@Genisson.com` chega como `genisson.com`. Postagens, links de outros sites, e-mails e usuários inválidos não viram identidades no CRM.
+- Aplica a mesma regra aos salvamentos parciais e à conclusão. Ao sair do campo, o usuário válido aparece como @usuario.
+
 ## 2026-10-27 — Componentes originais da referência
 
 - Substituída a aproximação por componentes e recursos do `obrigado-x5med` em `0bc2798`: ingresso com inclinação, três camadas de faixas, transição de rolagem, cartões e checklist.
