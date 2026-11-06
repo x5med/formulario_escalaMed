@@ -10,7 +10,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Switch } from "@/components/ui/switch";
 import { RegistrationSuccess } from "@/components/registration-success";
 import { META_CAPI_CONSENT_SUMMARY, META_CAPI_CONSENT_TEXT, WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT } from "@/lib/consent";
-import { formatCouponInput, normalizeCoupon } from "@/lib/coupons";
+import { formatCouponInput, initialCouponCode, normalizeCoupon } from "@/lib/coupons";
 import { formatPhoneInput } from "@/lib/phone";
 import { normalizeInstagram } from "@/lib/instagram";
 import { APPLICATION_FIELDS, ApplicationValidationError, readApplicationErrors, validateApplication, VALIDATION_SUMMARY, type ApplicationField } from '@/lib/application-validation';
@@ -90,7 +90,7 @@ const initialData: ApplicationData = {
 
 function hasAnswer(data: ApplicationData) {
   return [data.name, data.email, data.phone, data.instagram, data.role,
-    data.otherRole, data.revenueRange, data.couponCode].some((value) => value.trim().length > 0);
+    data.otherRole, data.revenueRange].some((value) => value.trim().length > 0);
 }
 
 function readStoredDraft(): StoredDraft | null {
@@ -357,13 +357,15 @@ export function ApplicationForm() {
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       const stored = readStoredDraft();
+      const restored = stored?.data ?? initialData;
+      const next = { ...restored, couponCode: initialCouponCode(window.location.search, restored.couponCode) };
       if (stored) {
         leadIdRef.current = stored.id;
-        latestDataRef.current = stored.data;
-        setData(stored.data);
       } else {
         leadId();
       }
+      latestDataRef.current = next;
+      setData(next);
       setDraftReady(true);
     }, 0);
     return () => window.clearTimeout(timeout);

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-06 — convite vindo do WhatsApp da LP
+
+- Novo cupom gratuito LPESCALAMED, validado também no servidor e encaminhado ao Metrics para identificação própria no cadastro e no relatório.
+- Link com `?cupom=LPESCALAMED` preenche o campo na abertura, preservando edição e remoção. Código inválido mantém o rascunho; cadastrar outra pessoa inicia vazio.
+- Cupom sozinho não inicia autosave nem cria cadastro ao abrir o formulário. Cupons e fluxos existentes permanecem disponíveis.
+
 ## 2026-10-28 — Instagram padronizado antes do Metrics
 
 - Normalização compartilhada entre formulário, validação e API: remove espaços/caracteres invisíveis, padroniza caixa e @, e extrai o usuário de links de perfil.

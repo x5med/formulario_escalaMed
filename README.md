@@ -16,6 +16,8 @@ Depois que a inscrição é concluída, o rascunho, o identificador persistido e
 
 ## Tracking e confirmação de compra
 
+O cupom `LPESCALAMED` concede inscrição gratuita, assim como os cupons de convite existentes. O link `https://formulario-escalamed.x5med.com.br/?cupom=LPESCALAMED` preenche o campo na abertura; `coupon` também é aceito como parâmetro. Um cupom válido explícito na URL prevalece sobre o cupom do rascunho, enquanto URL sem cupom válido conserva o rascunho. O participante pode editar/remover o código, e `Cadastrar outra pessoa` inicia o formulário vazio. O servidor revalida o código antes de concluir. A classificação e o relatório no Metrics dependem da migration `20261106112829_escalamed_lp_coupon.sql`, sem atualização retroativa de inscrições.
+
 O GTM `GTM-M4GT66JQ` roda com Consent Mode v2 e a preferência é compartilhada pelos subdomínios `*.x5med.com.br`. O formulário preserva UTMs e identificadores de clique e os encaminha ao checkout. A compra é registrada pelo webhook assinado da Eduzz em `/api/webhooks/eduzz`, somente para `myeduzz.invoice_paid`, usando o ID da transação para deduplicação.
 
 - `EDUZZ_WEBHOOK_SECRET` — chave HMAC SHA-256 configurada no Developer Hub da Eduzz.
