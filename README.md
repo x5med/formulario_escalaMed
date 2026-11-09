@@ -164,3 +164,7 @@ The portable build runs Vinext directly without a host `timeout` command. The ma
 
 - [vinext Documentation](https://github.com/cloudflare/vinext)
 - [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+
+## Cupom PESQUISA — implementação local de 09/11/2026
+
+O cupom `PESQUISA` concede inscrição gratuita nas mesmas condições dos convites existentes. Link: https://formulario-escalamed.x5med.com.br/?cupom=PESQUISA . O prefill é editável/removível, não cria cadastro ao abrir a página e o servidor valida o código. O Metrics recebe `couponCode: "PESQUISA"`; classificador local e relatório dependem da migration `20261109141459_escalamed_pesquisa_coupon.sql`. Não há backfill, aprovação automática da participação ou alteração de consentimento. Publicação e homologação em produção são etapas separadas.

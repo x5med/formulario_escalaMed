@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-09 — cupom PESQUISA
+
+- Cupom PESQUISA concede a mesma inscrição gratuita dos convites existentes, com validação compartilhada e encaminhamento do código próprio ao Metrics.
+- Link `?cupom=PESQUISA` utiliza o prefill existente, sem criar cadastro apenas por abrir a página. Edição, remoção e rascunhos mantêm as regras atuais.
+- Implementação local; aplicação da migration do Metrics, publicação e homologação em produção são etapas separadas.
+
 ## 2026-11-06 — convite vindo do WhatsApp da LP
 
 - Novo cupom gratuito LPESCALAMED, validado também no servidor e encaminhado ao Metrics para identificação própria no cadastro e no relatório.

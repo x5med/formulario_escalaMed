@@ -12,6 +12,7 @@ const coupons = new Map([
   ["bioma100", "Bioma100"],
   ["saude", "SAUDE"],
   ["lpescalamed", "LPESCALAMED"],
+  ["pesquisa", "PESQUISA"],
   ["terapeutica", "Terapeutica"],
   ["varanda", "Varanda"],
 ]);
