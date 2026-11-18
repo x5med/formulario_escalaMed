@@ -5,10 +5,14 @@ import { normalizeCoupon } from "@/lib/coupons";
 import { MetricsSyncError, syncLeadToMetrics, type MetricsLeadPayload } from "@/lib/metrics";
 import { applicationPhoneKey, validateApplication, VALIDATION_SUMMARY } from '@/lib/application-validation';
 import { normalizeInstagram } from '@/lib/instagram';
+import { checkRegistrationEmail, EmailCheckError } from '@/lib/registration-email.server';
+import { DUPLICATE_REGISTRATION_EMAIL } from '@/lib/registration-email';
 
 export const runtime = "nodejs";
 
 type Payload = Record<string, unknown>;
+const noStore = { 'Cache-Control': 'private, no-store' };
+function duplicateEmail() { return NextResponse.json({ code: 'duplicate_registration_email', field: 'email', error: DUPLICATE_REGISTRATION_EMAIL, errors: { email: DUPLICATE_REGISTRATION_EMAIL } }, { status: 409, headers: noStore }); }
 
 function text(value: unknown, max = 500) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
@@ -89,6 +93,7 @@ export async function POST(request: Request) {
   const checkoutUrl = "https://chk.eduzz.com/1W3223YQ92";
 
   try {
+    if (!await checkRegistrationEmail(request, id, lead.email, lead.phone)) return duplicateEmail();
     const reception = await syncLeadToMetrics(lead);
     return NextResponse.json(
       couponCode ? { id, access: 'free', receiptId: reception.submissionId, processing: reception.processing }
@@ -96,6 +101,8 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (error) {
+    if (error instanceof MetricsSyncError && error.duplicateEmail) return duplicateEmail();
+    if (error instanceof EmailCheckError) return NextResponse.json({ error: error.message, code: 'email_check_unavailable', errors: { email: error.message } }, { status: error.status, headers: noStore });
     console.error("[leads POST] Metrics sync failed", error instanceof Error ? error.message : error);
     if (error instanceof MetricsSyncError && error.needsReview) return NextResponse.json({ error: error.message, code: 'registration_review' }, { status: 409 });
     return NextResponse.json({ error: 'O serviço de inscrições está indisponível no momento. Seus dados foram mantidos; tente novamente em instantes.', code: 'service_unavailable' }, { status: 502 });
@@ -120,6 +127,7 @@ export async function PATCH(request: Request) {
   if (!hasAnswer) return NextResponse.json({ error: "Nenhuma resposta informada." }, { status: 400 });
 
   try {
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email) && !await checkRegistrationEmail(request, id, lead.email, lead.phone)) return duplicateEmail();
     await syncLeadToMetrics(lead);
   } catch (error) {
     console.error("[leads PATCH] Metrics sync failed", error instanceof Error ? error.message : error);

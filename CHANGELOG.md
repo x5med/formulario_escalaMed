@@ -1,3 +1,9 @@
+## 2026-11-18 — e-mail pessoal por inscrição
+
+- Validação no campo, no salvamento de rascunho e no envio final para impedir e-mail já usado em outra inscrição EscalaMED.
+- Mensagem específica no e-mail, respostas preservadas e consulta privada limitada, sem expor os dados de outro inscrito.
+- Reenvios da própria inscrição continuam compatíveis; corrida entre envios é conferida também pelo Metrics.
+
 # Changelog
 
 ## 2026-11-09 — cupom PESQUISA

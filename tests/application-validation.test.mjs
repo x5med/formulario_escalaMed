@@ -39,12 +39,18 @@ test('every required field explains format or missing selection without silently
 test('server returns all field errors before calling the CRM; valid and unavailable are distinct',async()=>{
   let writes=0,fail=false;
   class MetricsSyncError extends Error { needsReview=false; }
-  const route=load('app/api/leads/route.ts',{'next/server':{NextResponse:{json:Response.json}},'@/lib/application-validation':validation,'@/lib/instagram':instagram,'@/lib/coupons':coupons,'@/lib/consent':{META_CAPI_CONSENT_VERSION:'test',WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT:'test'},'@/lib/metrics':{MetricsSyncError,syncLeadToMetrics:async lead=>{writes++;if(fail)throw new MetricsSyncError('private server detail');assert.equal(lead.phone,'11912345678');return {};}}});
+  let emailAvailable=true;
+  class EmailCheckError extends Error {}
+  const route=load('app/api/leads/route.ts',{'next/server':{NextResponse:{json:Response.json}},'@/lib/registration-email.server':{EmailCheckError,checkRegistrationEmail:async()=>emailAvailable},'@/lib/registration-email':load('lib/registration-email.ts'),'@/lib/application-validation':validation,'@/lib/instagram':instagram,'@/lib/coupons':coupons,'@/lib/consent':{META_CAPI_CONSENT_VERSION:'test',WHATSAPP_EVENT_REGISTRATION_CONSENT_TEXT:'test'},'@/lib/metrics':{MetricsSyncError,syncLeadToMetrics:async lead=>{writes++;if(fail)throw new MetricsSyncError('private server detail');assert.equal(lead.phone,'11912345678');return {};}}});
   const request=body=>new Request('https://example.invalid/api/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   const response=await route.POST(request({...valid,name:'Ana9',email:'ana@',phone:'1100000000',instagram:'https://example.com/ana'}));
   assert.equal(response.status,400);const body=await response.json();assert.equal(body.code,'validation_error');assert.deepEqual(Object.keys(body.errors),['name','email','phone','instagram']);assert.equal(body.field,'name');assert.equal(writes,0);
   const raw=await route.POST(request({...valid,name:'x'.repeat(121)}));assert.equal(raw.status,400);assert.equal(writes,0);
   assert.equal((await route.POST(request(valid))).status,201);assert.equal(writes,1);
+  emailAvailable=false;
+  const duplicate=await route.POST(request(valid));assert.equal(duplicate.status,409);assert.equal(writes,1);assert.match((await duplicate.json()).errors.email,/outra pessoa/);
+  const draft=await route.PATCH(request(valid));assert.equal(draft.status,409);assert.equal(writes,1);
+  emailAvailable=true;
   fail=true;const unavailable=await route.POST(request(valid));assert.equal(unavailable.status,502);const error=await unavailable.json();assert.equal(error.code,'service_unavailable');assert.ok(!error.errors);assert.match(error.error,/serviço/);assert.ok(!error.error.includes('private'));
 });
 

@@ -14,6 +14,7 @@ import { formatCouponInput, initialCouponCode, normalizeCoupon } from "@/lib/cou
 import { formatPhoneInput } from "@/lib/phone";
 import { normalizeInstagram } from "@/lib/instagram";
 import { APPLICATION_FIELDS, ApplicationValidationError, readApplicationErrors, validateApplication, VALIDATION_SUMMARY, type ApplicationField } from '@/lib/application-validation';
+import { DUPLICATE_REGISTRATION_EMAIL, EMAIL_CHECK_UNAVAILABLE } from '@/lib/registration-email';
 import {
   decorateUrl,
   FORM_ID,
@@ -204,6 +205,7 @@ export function ApplicationForm() {
   const [draftReady, setDraftReady] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [requestError, setRequestError] = useState("");
+  const [emailCheck, setEmailCheck] = useState<'idle' | 'checking' | 'available' | 'taken' | 'unavailable'>('idle');
   const [loading, setLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [receiptId, setReceiptId] = useState('');
@@ -224,6 +226,25 @@ export function ApplicationForm() {
     if (!leadIdRef.current) leadIdRef.current = crypto.randomUUID();
     return leadIdRef.current;
   }, []);
+
+  useEffect(() => {
+    if (!draftReady || completed || paymentUrl || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) return;
+    const controller = new AbortController(); let active = true;
+    const timer = window.setTimeout(async () => {
+      setEmailCheck('checking');
+      const timeout = window.setTimeout(() => controller.abort(), 10_000);
+      try {
+        const response = await fetch('/api/leads/email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: controller.signal,
+          body: JSON.stringify({ sourceLeadId: leadId(), email: data.email, phone: data.phone }) });
+        const result = await response.json() as { available?: unknown };
+        if (!active) return;
+        if (!response.ok || typeof result.available !== 'boolean') throw new Error('email_check_unavailable');
+        setEmailCheck(result.available ? 'available' : 'taken');
+      } catch { if (active) setEmailCheck('unavailable'); }
+      finally { window.clearTimeout(timeout); }
+    }, 500);
+    return () => { active = false; window.clearTimeout(timer); controller.abort(); };
+  }, [data.email, data.phone, draftReady, completed, paymentUrl, leadId]);
 
   const savePartial = useCallback((snapshot: ApplicationData): Promise<void> => {
     if (!hasAnswer(snapshot) || submittingRef.current) return activeSaveRef.current ?? Promise.resolve();
@@ -346,6 +367,7 @@ export function ApplicationForm() {
     setData(next);
     setErrors({});
     setRequestError("");
+    setEmailCheck('idle');
     setLoading(false);
     setCompleted(false);
     setReceiptId('');
@@ -451,6 +473,7 @@ export function ApplicationForm() {
   }, [finishSubmission, leadId, trackValidationError]);
 
   const update = (field: keyof ApplicationData, value: string | boolean) => {
+    if (field === 'email' || field === 'phone') setEmailCheck('idle');
     const current = latestDataRef.current;
     const next = field === "role"
       ? { ...current, role: String(value), otherRole: value === "other" ? current.otherRole : "" }
@@ -563,7 +586,10 @@ export function ApplicationForm() {
 
         <div className="grid gap-x-4 gap-y-4 xl:grid-cols-2">
           <div><Label htmlFor="name" className="mb-2 text-[#173D5D]">Nome completo *</Label><Input id="name" autoComplete="name" required className="form-field" placeholder="Seu nome completo" value={data.name} onChange={(event) => update("name", event.target.value)} aria-invalid={!!errors.name} aria-describedby={errors.name ? 'name-error' : undefined} /><FieldError field="name">{errors.name}</FieldError></div>
-          <div><Label htmlFor="email" className="mb-2 text-[#173D5D]">E-mail *</Label><Input id="email" type="email" autoComplete="email" required className="form-field" placeholder="voce@exemplo.com" value={data.email} onChange={(event) => update("email", event.target.value)} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} /><FieldError field="email">{errors.email}</FieldError></div>
+          <div><Label htmlFor="email" className="mb-2 text-[#173D5D]">E-mail pessoal *</Label><Input id="email" type="email" autoComplete="email" maxLength={180} required className="form-field" placeholder="voce@exemplo.com" value={data.email} onChange={(event) => update("email", event.target.value)} aria-invalid={!!errors.email || emailCheck === 'taken'} aria-describedby={errors.email || emailCheck === 'taken' || emailCheck === 'unavailable' ? 'email-error' : 'email-help'} />
+            <FieldError field="email">{emailCheck === 'taken' ? DUPLICATE_REGISTRATION_EMAIL : emailCheck === 'unavailable' ? EMAIL_CHECK_UNAVAILABLE : errors.email}</FieldError>
+            <p id="email-help" aria-live="polite" className="mt-1.5 text-xs text-[#60778A]">{emailCheck === 'checking' ? 'Conferindo e-mail…' : 'Use um e-mail pessoal diferente para cada inscrito.'}</p>
+          </div>
           <div>
             <Label htmlFor="phone" className="mb-2 text-[#173D5D]">WhatsApp *</Label>
             <div className="relative">
@@ -626,7 +652,7 @@ export function ApplicationForm() {
         {requestError && <p role="alert" className="mt-5 rounded-xl bg-[#FFF1F1] px-4 py-3 text-sm text-[#A63838]">{requestError}</p>}
 
         <div className="registration-actions">
-          <Button type="submit" className="h-12 w-full rounded-xl bg-[#002647] px-4 text-white shadow-[0_10px_24px_rgb(0_38_71/18%)] hover:bg-[#06395F] disabled:cursor-not-allowed disabled:bg-[#8798A6]" disabled={loading}>
+          <Button type="submit" className="h-12 w-full rounded-xl bg-[#002647] px-4 text-white shadow-[0_10px_24px_rgb(0_38_71/18%)] hover:bg-[#06395F] disabled:cursor-not-allowed disabled:bg-[#8798A6]" disabled={loading || emailCheck === 'taken' || emailCheck === 'checking'}>
             {loading ? <><Loader2 className="animate-spin" /> Registrando...</> : <>Quero garantir minha vaga <ArrowRight /></>}
           </Button>
           <p className="mt-2 text-center text-xs leading-5 text-[#6F8292]">{coupon ? "Nenhum pagamento será necessário com este cupom." : "Você será direcionado ao pagamento após enviar seus dados."}</p>

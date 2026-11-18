@@ -5,6 +5,7 @@ import Module from 'node:module';
 import ts from 'typescript';
 
 function load(file, mocks = {}) {
+  if (file !== 'lib/registration-email.ts') mocks = { '@/lib/registration-email': load('lib/registration-email.ts'), '@/lib/registration-email.server': { EmailCheckError: class extends Error {}, checkRegistrationEmail: async () => true }, ...mocks };
   const mod = new Module(file);
   mod.require = name => Object.hasOwn(mocks, name) ? mocks[name] : Module.createRequire(import.meta.url)(name);
   mod._compile(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText, file);

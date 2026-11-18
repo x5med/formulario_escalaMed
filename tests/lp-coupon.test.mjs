@@ -5,6 +5,7 @@ import Module from 'node:module';
 import ts from 'typescript';
 
 function load(file, mocks = {}) {
+  if (file !== 'lib/registration-email.ts') mocks = { '@/lib/registration-email': load('lib/registration-email.ts'), '@/lib/registration-email.server': { EmailCheckError: class extends Error {}, checkRegistrationEmail: async () => true }, ...mocks };
   const mod = new Module(file);
   mod.require = name => Object.hasOwn(mocks, name) ? mocks[name] : Module.createRequire(import.meta.url)(name);
   mod._compile(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText, file);
@@ -39,7 +40,7 @@ test('opening a coupon link does not schedule CRM autosave until the visitor sup
     '@/lib/tracking':{pushTrackingEvent:event=>events.push(event)},
    });
    component.ApplicationForm();
-   const autosave=effects.find(fn=>fn.toString().includes('!draftReady'));
+   const autosave=effects.find(fn=>fn.toString().includes('hasAnswer'));
    assert.ok(autosave);autosave();
    assert.equal(scheduled,name?1:0);
    assert.deepEqual(events,[]);
