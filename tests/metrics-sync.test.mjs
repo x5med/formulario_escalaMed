@@ -36,3 +36,8 @@ test('durable received acknowledgement accepts review without claiming a CRM car
  response(result({received:true,submissionId:'invalid',processing:'review',leadId:null,reason:'identity_review'}),202);
  await assert.rejects(syncLeadToMetrics(payload),MetricsSyncError);
 });
+
+test('final atomic duplicate-email rejection stays distinct from identity review',async()=>{
+ response({code:'duplicate_registration_email'},409);
+ await assert.rejects(syncLeadToMetrics(payload),error=>error instanceof MetricsSyncError&&error.duplicateEmail&&!error.needsReview);
+});

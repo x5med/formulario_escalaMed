@@ -168,3 +168,12 @@ The portable build runs Vinext directly without a host `timeout` command. The ma
 ## Cupom PESQUISA — implementação local de 09/11/2026
 
 O cupom `PESQUISA` concede inscrição gratuita nas mesmas condições dos convites existentes. Link: https://formulario-escalamed.x5med.com.br/?cupom=PESQUISA . O prefill é editável/removível, não cria cadastro ao abrir a página e o servidor valida o código. O Metrics recebe `couponCode: "PESQUISA"`; classificador local e relatório dependem da migration `20261109141459_escalamed_pesquisa_coupon.sql`. Não há backfill, aprovação automática da participação ou alteração de consentimento. Publicação e homologação em produção são etapas separadas.
+
+
+## E-mail pessoal por inscrição (18/11/2026)
+
+O campo E-mail pessoal consulta a disponibilidade depois de uma pausa na digitação. E-mail já usado em outra inscrição deste evento exibe orientação para usar o e-mail pessoal do novo participante; não revela nome, telefone ou protocolo de terceiros. As respostas digitadas são mantidas.
+
+`POST /api/leads/email` exige Origin exato, JSON limitado e responde somente disponibilidade. O proxy usa a mesma `ESCALAMED_FORM_INGEST_KEY` e deriva o endpoint privado `escalamed-email` da URL de ingestão configurada. POST final e PATCH de rascunho verificam novamente; o Metrics também serializa a reserva final do e-mail, evitando duas conclusões concorrentes. A migration necessária no Metrics é `20261118162331_escalamed_submission_resolution.sql`; publicar o backend antes desta LP. A chave nunca é enviada ao navegador.
+
+Reenvio compatível da mesma inscrição continua permitido. Consulta indisponível ou limitada mantém o formulário e pede nova tentativa, sem declarar e-mail livre. Correções de identidade da equipe são feitas no Metrics, com prévia e histórico, separadas do cadastro público.

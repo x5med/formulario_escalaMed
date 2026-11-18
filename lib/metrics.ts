@@ -42,7 +42,7 @@ export type MetricsLeadPayload = {
 };
 
 export class MetricsSyncError extends Error {
-  constructor(public readonly needsReview: boolean) {
+  constructor(public readonly needsReview: boolean, public readonly duplicateEmail = false) {
     super(needsReview
       ? 'Não foi possível confirmar sua inscrição. Seus dados precisam de conferência pela equipe X5 MED. Não houve confirmação das respostas deste envio.'
       : 'Não foi possível registrar sua inscrição. Tente novamente.');
@@ -83,7 +83,10 @@ export async function syncLeadToMetrics(payload: MetricsLeadPayload) {
       signal: controller.signal,
     });
     const result = await response.json().catch(() => null) as MetricsSyncResult | null;
-    if (!response.ok) throw new MetricsSyncError(response.status === 409);
+    if (!response.ok) {
+      const duplicateEmail = (result as { code?: string } | null)?.code === 'duplicate_registration_email';
+      throw new MetricsSyncError(response.status === 409 && !duplicateEmail, duplicateEmail);
+    }
     // Check the semantic acknowledgement too: older Metrics versions return
     // HTTP 200 for ignored/review results. Never present them as success.
     const durable = payload.status === 'completed' && result?.ok === true && result.received === true
